@@ -80,9 +80,12 @@ export function allocatePaychecks(
         arr.push({ name: bill.name + ' (next month)', amount: bill.amount, dueDate: format(nextDueDate, 'yyyy-MM-dd') });
         billMap.set(idx, arr);
 
-        // The regular housing bill for this month goes to the most recent paycheck before due date
+        // The regular housing bill for this month goes to the most recent paycheck before due date.
+        // Search all paychecks except the 3rd one (already used for next month) so that a bill
+        // due on day 1 can be covered by the last paycheck of the prior month.
         const dueDate = dueDateForBill(bill, year, month);
-        const candidate = findAssignedPaycheck(monthPaychecks.slice(0, 2), dueDate, paychecks);
+        const nonThirdPaychecks = paychecks.filter((p) => p.index !== thirdPaycheck.index);
+        const candidate = findAssignedPaycheck(nonThirdPaychecks, dueDate, paychecks);
         if (candidate !== null) {
           const arr2 = billMap.get(candidate) ?? [];
           arr2.push({ name: bill.name, amount: bill.amount, dueDate: format(dueDate, 'yyyy-MM-dd') });
