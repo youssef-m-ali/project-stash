@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { localStorageAdapter } from '@/lib/storage/localStorage';
+import { storageAdapter } from '@/lib/storage/sqliteAdapter';
 
 export default function WelcomePage() {
   const [hasSavedState, setHasSavedState] = useState(false);
 
   useEffect(() => {
-    setHasSavedState(localStorageAdapter.loadState() !== null);
+    storageAdapter.loadState().then((s) => setHasSavedState(s !== null));
   }, []);
 
   return (

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { BudgetState } from '@/lib/types';
-import { localStorageAdapter } from '@/lib/storage/localStorage';
+import { storageAdapter } from '@/lib/storage/sqliteAdapter';
 import { StepIncome } from '@/components/questionnaire/StepIncome';
 import { StepFixed } from '@/components/questionnaire/StepFixed';
 import { StepVariable } from '@/components/questionnaire/StepVariable';
@@ -43,8 +43,7 @@ export default function SetupPage() {
   useEffect(() => {
     if (searchParams.get('sample') === '1') {
       const s = sampleBudgetState();
-      localStorageAdapter.saveState(s);
-      router.replace('/dashboard');
+      storageAdapter.saveState(s).then(() => router.replace('/dashboard'));
     }
   }, [searchParams, router]);
 
@@ -65,8 +64,7 @@ export default function SetupPage() {
     const final = { ...draft, ...slice } as BudgetState;
     final.createdAt = new Date().toISOString();
     final.updatedAt = new Date().toISOString();
-    localStorageAdapter.saveState(final);
-    router.push('/dashboard');
+    storageAdapter.saveState(final).then(() => router.push('/dashboard'));
   }
 
   const stepProps = { draft, onBack: handleBack };

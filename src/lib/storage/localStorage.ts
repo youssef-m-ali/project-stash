@@ -5,23 +5,23 @@ import { runMigrations } from './migrations';
 const STATE_KEY = 'project-stash:v1';
 const ACTUALS_KEY = 'project-stash:v1:actuals';
 
+// Kept only for the one-time migration from localStorage → SQLite.
 export const localStorageAdapter: StorageAdapter = {
-  loadState(): BudgetState | null {
+  async loadState(): Promise<BudgetState | null> {
     try {
       const raw = localStorage.getItem(STATE_KEY);
       if (!raw) return null;
-      const parsed = JSON.parse(raw) as BudgetState;
-      return runMigrations(parsed);
+      return runMigrations(JSON.parse(raw) as BudgetState);
     } catch {
       return null;
     }
   },
 
-  saveState(state: BudgetState): void {
+  async saveState(state: BudgetState): Promise<void> {
     localStorage.setItem(STATE_KEY, JSON.stringify(state));
   },
 
-  loadActuals(): Actuals {
+  async loadActuals(): Promise<Actuals> {
     try {
       const raw = localStorage.getItem(ACTUALS_KEY);
       if (!raw) return {};
@@ -31,12 +31,15 @@ export const localStorageAdapter: StorageAdapter = {
     }
   },
 
-  saveActuals(actuals: Actuals): void {
+  async saveActuals(actuals: Actuals): Promise<void> {
     localStorage.setItem(ACTUALS_KEY, JSON.stringify(actuals));
   },
 
-  clear(): void {
+  async clear(): Promise<void> {
     localStorage.removeItem(STATE_KEY);
     localStorage.removeItem(ACTUALS_KEY);
   },
 };
+
+export const LS_STATE_KEY = STATE_KEY;
+export const LS_ACTUALS_KEY = ACTUALS_KEY;

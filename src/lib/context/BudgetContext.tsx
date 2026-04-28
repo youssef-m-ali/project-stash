@@ -3,7 +3,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BudgetState, Paycheck, PaycheckAllocation, MonthlySummary } from '@/lib/types';
-import { localStorageAdapter } from '@/lib/storage/localStorage';
+import { storageAdapter } from '@/lib/storage/sqliteAdapter';
+import { LS_STATE_KEY, LS_ACTUALS_KEY } from '@/lib/storage/localStorage';
+import { runMigrations } from '@/lib/storage/migrations';
 import { generatePaychecks } from '@/lib/budget/paychecks';
 import { allocatePaychecks } from '@/lib/budget/allocate';
 import { monthlyRollup } from '@/lib/budget/rollup';
@@ -41,20 +43,37 @@ function compute(state: BudgetState): ComputedBudget {
     state.savingsGoal.targetRate,
     state.variableExpenses,
   );
-
   const sixMonthSavings = summaries.reduce((s, m) => s + Math.max(0, m.budgetedSavings), 0);
   const totalIncome = summaries.reduce((s, m) => s + m.netIncome, 0);
   const effectiveSavingsRate = totalIncome > 0 ? sixMonthSavings / totalIncome : 0;
-
   return { paychecks, allocations, summaries, sixMonthSavings, effectiveSavingsRate };
+}
+
+async function migrateFromLocalStorage(): Promise<BudgetState | null> {
+  try {
+    const raw = window.localStorage.getItem(LS_STATE_KEY);
+    if (!raw) return null;
+    const state = runMigrations(JSON.parse(raw) as BudgetState);
+    await storageAdapter.saveState(state);
+    window.localStorage.removeItem(LS_STATE_KEY);
+    window.localStorage.removeItem(LS_ACTUALS_KEY);
+    return state;
+  } catch {
+    return null;
+  }
 }
 
 export function BudgetProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [value, setValue] = useState<BudgetContextValue | null>(null);
 
-  function load() {
-    const state = localStorageAdapter.loadState();
+  async function load() {
+    let state = await storageAdapter.loadState();
+
+    if (!state) {
+      state = await migrateFromLocalStorage();
+    }
+
     if (!state) {
       router.replace('/');
       return;
