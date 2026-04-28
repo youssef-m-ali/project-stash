@@ -110,6 +110,32 @@ describe('allocatePaychecks', () => {
     expect(hasSub).toBe(false);
   });
 
+  it('non-housing bills due before the first paycheck of the month get assigned to the prior month\'s last paycheck', () => {
+    // May 2026: May 1, 15, 29 (3 paychecks). June: Jun 12, Jun 26.
+    // A bill due June 5 has no June paycheck before it, so May 29 (7 days prior) should cover it.
+    const earlyJuneBill: FixedExpense = {
+      id: 'phone',
+      name: 'Phone',
+      amount: 60,
+      dueDayOfMonth: 5,
+      category: 'utilities',
+    };
+    const paychecks = generatePaychecks('2026-05-01', 2000, 6);
+    const allocations = allocatePaychecks(paychecks, [earlyJuneBill], [], noSubs);
+    const may29 = allocations.find((a) => a.paycheck.date === '2026-05-29')!;
+    expect(may29.billsPaid.some((b) => b.name === 'Phone')).toBe(true);
+  });
+
+  it('housing in the month after a 3-paycheck month is not double-assigned', () => {
+    // May 29 advances June rent. Jun 12 (first June paycheck, mid-month) must NOT
+    // also carry a plain "Rent" entry — that would double-count June's housing.
+    // Jun 26 legitimately carries July rent (it is 5 days before July 1), which is fine.
+    const paychecks = generatePaychecks('2026-05-01', 2000, 6);
+    const allocations = allocatePaychecks(paychecks, [rent], [], noSubs);
+    const jun12 = allocations.find((a) => a.paycheck.date === '2026-06-12')!;
+    expect(jun12.billsPaid.every((b) => b.name !== 'Rent')).toBe(true);
+  });
+
   it('returns empty array for empty paychecks', () => {
     expect(allocatePaychecks([], [rent], [groceries], noSubs)).toEqual([]);
   });

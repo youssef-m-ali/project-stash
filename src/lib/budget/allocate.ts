@@ -7,6 +7,11 @@ function subscriptionTotal(subscriptions: Subscription[]): number {
     .reduce((sum, s) => sum + s.monthlyAmount, 0);
 }
 
+function prevMonthKey(monthKey: string): string {
+  const [y, m] = monthKey.split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}
+
 function dueDateForBill(bill: FixedExpense, year: number, month: number): Date {
   const daysInMonth = getDaysInMonth(new Date(year, month));
   const day = Math.min(bill.dueDayOfMonth, daysInMonth);
@@ -82,17 +87,25 @@ export function allocatePaychecks(
           billMap.set(candidate, arr2);
         }
       } else if (bill.category === 'housing') {
-        // Normal month: just assign to the paycheck on/before due date
+        // If the previous month was a 3-paycheck month its 3rd paycheck already
+        // funded this month's housing as an advance — don't double-assign.
+        const prev = prevMonthKey(monthKey);
+        if ((byMonth.get(prev)?.length ?? 0) === 3) continue;
+
+        // Normal month: search all paychecks so a bill due on day 1 can be covered
+        // by the last paycheck of the previous month (within the 14-day window).
         const dueDate = dueDateForBill(bill, year, month);
-        const candidate = findAssignedPaycheck(monthPaychecks, dueDate, paychecks);
+        const candidate = findAssignedPaycheck(paychecks, dueDate, paychecks);
         if (candidate !== null) {
           const arr = billMap.get(candidate) ?? [];
           arr.push({ name: bill.name, amount: bill.amount });
           billMap.set(candidate, arr);
         }
       } else {
+        // Search all paychecks — bills due early in the month (before the first
+        // in-month paycheck) are covered by the last paycheck of the prior month.
         const dueDate = dueDateForBill(bill, year, month);
-        const candidate = findAssignedPaycheck(monthPaychecks, dueDate, paychecks);
+        const candidate = findAssignedPaycheck(paychecks, dueDate, paychecks);
         if (candidate !== null) {
           const arr = billMap.get(candidate) ?? [];
           arr.push({ name: bill.name, amount: bill.amount });
