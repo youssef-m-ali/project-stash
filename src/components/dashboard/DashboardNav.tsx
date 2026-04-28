@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const TABS = [
-  { label: 'Summary',      href: '/dashboard',             exact: true  },
-  { label: 'Per Paycheck', href: '/dashboard/per-paycheck', exact: false },
-  { label: 'Monthly',      href: '/dashboard/monthly',      exact: false, soon: true },
-  { label: 'Subscriptions',href: '/dashboard/subscriptions',exact: false, soon: true },
-  { label: 'Settings',     href: '/dashboard/settings',     exact: false, soon: true },
+  { label: 'Summary',       href: '/dashboard',              exact: true  },
+  { label: 'Per Paycheck',  href: '/dashboard/per-paycheck', exact: false },
+  { label: 'Monthly',       href: '/dashboard/monthly',      exact: false },
+  { label: 'Import',        href: '/dashboard/import',       exact: false },
+  { label: 'Subscriptions', href: '/dashboard/subscriptions',exact: false, soon: true },
+  { label: 'Settings',      href: '/dashboard/settings',     exact: false, soon: true },
 ];
 
 export function DashboardNav() {
