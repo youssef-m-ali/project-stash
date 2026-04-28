@@ -22,7 +22,7 @@ export function DashboardNav() {
     <header className="border-b border-zinc-700 bg-zinc-800/80 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto w-full max-w-6xl px-4">
         <div className="flex items-center gap-1 h-12 overflow-x-auto">
-          <span className="text-sm font-semibold text-zinc-100 mr-4 shrink-0">Project Stash</span>
+          <span className="text-sm font-semibold text-zinc-100 mr-4 shrink-0">Stash Up</span>
           {TABS.map((tab) => (
             tab.soon ? (
               <span

@@ -16,7 +16,7 @@ export default function WelcomePage() {
       <main className="w-full max-w-lg flex flex-col gap-8">
         <div className="flex flex-col gap-3">
           <h1 className="text-4xl font-bold tracking-tight text-zinc-100">
-            Project Stash
+            Stash Up
           </h1>
           <p className="text-lg text-zinc-400 leading-relaxed">
             Build a 6-month budget plan on your biweekly paycheck. Set a savings

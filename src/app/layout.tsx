@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Project Stash — Biweekly Budget Planner",
+  title: "Stash Up — Biweekly Budget Planner",
   description: "Plan your 6-month budget. All data stays in your browser.",
 };
 
