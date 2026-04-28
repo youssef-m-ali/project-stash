@@ -19,6 +19,15 @@ export default function MonthlyPage() {
   const { summaries } = computed;
   const currency = state.currency;
   const [actuals, setActuals] = useState<Actuals>({});
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  function toggleMonth(key: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetch('/api/actuals')
@@ -62,17 +71,22 @@ export default function MonthlyPage() {
       {summaries.map((summary) => {
         const monthActuals = actuals[summary.monthKey] ?? {};
         const uncategorized = monthActuals['__uncategorized__'] ?? 0;
+        const isCollapsed = collapsed.has(summary.monthKey);
 
         return (
           <div key={summary.monthKey} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-zinc-300">{monthLabel(summary.monthKey)}</h2>
+            <button
+              onClick={() => toggleMonth(summary.monthKey)}
+              className="flex items-center gap-2 text-left w-fit group"
+            >
+              <span className={`text-zinc-500 transition-transform text-xs ${isCollapsed ? '-rotate-90' : ''}`}>▼</span>
+              <h2 className="text-sm font-semibold text-zinc-300 group-hover:text-zinc-100 transition-colors">{monthLabel(summary.monthKey)}</h2>
               {summary.paycheckCount === 3 && (
                 <span className="text-xs bg-emerald-900/40 text-emerald-400 border border-emerald-700/50 rounded px-2 py-0.5">3-paycheck month</span>
               )}
-            </div>
+            </button>
 
-            <div className="bg-zinc-700 rounded-xl border border-zinc-600 overflow-hidden">
+            {!isCollapsed && <div className="bg-zinc-700 rounded-xl border border-zinc-600 overflow-hidden">
               {/* Header */}
               <div className="grid grid-cols-[1fr_100px_100px_80px] gap-3 px-4 py-2 border-b border-zinc-600 text-xs font-medium text-zinc-500 uppercase tracking-wide">
                 <span>Category</span>
@@ -120,7 +134,7 @@ export default function MonthlyPage() {
                   {summary.hitsGoal ? '✓ goal' : `${Math.round(summary.savingsRate * 100)}%`}
                 </span>
               </div>
-            </div>
+            </div>}
           </div>
         );
       })}
