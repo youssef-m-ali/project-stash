@@ -148,15 +148,22 @@ export default function PerPaycheckPage() {
 
                     {/* Expanded bills */}
                     {isOpen && alloc.billsPaid.length > 0 && (
-                      <div className="px-4 pb-3 border-t border-zinc-600/50 pt-2 bg-zinc-800/40">
-                        <div className="flex flex-col gap-1">
-                          {alloc.billsPaid.map((bill, i) => (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <span className="text-zinc-400">{bill.name}</span>
-                              <span className="text-zinc-300 tabular-nums">{fmt(bill.amount, currency)}</span>
+                      <div className="border-t border-zinc-600/50 bg-zinc-800/40">
+                        {alloc.billsPaid.map((bill, i) => (
+                          <div
+                            key={i}
+                            className="md:grid md:grid-cols-[130px_1fr_110px_110px_110px] gap-3 px-4 py-1.5 last:pb-3 flex items-center justify-between"
+                          >
+                            <span className="hidden md:block" />
+                            <div className="flex flex-col gap-0">
+                              <span className="text-sm text-zinc-400">{bill.name}</span>
+                              <span className="text-xs text-zinc-600">Due {format(parseISO(bill.dueDate), 'MMM d')}</span>
                             </div>
-                          ))}
-                        </div>
+                            <span className="text-sm text-zinc-300 md:text-right tabular-nums">{fmt(bill.amount, currency)}</span>
+                            <span className="hidden md:block" />
+                            <span className="hidden md:block" />
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

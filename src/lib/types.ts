@@ -103,7 +103,7 @@ export type Paycheck = {
 export type PaycheckAllocation = {
   paycheck: Paycheck;
   job: string;
-  billsPaid: { name: string; amount: number }[];
+  billsPaid: { name: string; amount: number; dueDate: string }[];
   totalBills: number;
   variableAllowance: number;
   savings: number;

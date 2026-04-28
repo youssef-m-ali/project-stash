@@ -54,7 +54,7 @@ export function allocatePaychecks(
 
   // For each bill, figure out which paycheck it belongs to
   // We'll build a map: paycheckIndex -> bills[]
-  const billMap = new Map<number, { name: string; amount: number }[]>();
+  const billMap = new Map<number, { name: string; amount: number; dueDate: string }[]>();
 
   for (const bill of allFixed) {
     // We need to assign this bill for each month it appears in the window
@@ -75,7 +75,9 @@ export function allocatePaychecks(
         const thirdPaycheck = monthPaychecks[2];
         const idx = thirdPaycheck.index;
         const arr = billMap.get(idx) ?? [];
-        arr.push({ name: bill.name + ' (next month)', amount: bill.amount });
+        const nextMonthDt = new Date(year, month + 1, 1);
+        const nextDueDate = dueDateForBill(bill, nextMonthDt.getFullYear(), nextMonthDt.getMonth());
+        arr.push({ name: bill.name + ' (next month)', amount: bill.amount, dueDate: format(nextDueDate, 'yyyy-MM-dd') });
         billMap.set(idx, arr);
 
         // The regular housing bill for this month goes to the most recent paycheck before due date
@@ -83,7 +85,7 @@ export function allocatePaychecks(
         const candidate = findAssignedPaycheck(monthPaychecks.slice(0, 2), dueDate, paychecks);
         if (candidate !== null) {
           const arr2 = billMap.get(candidate) ?? [];
-          arr2.push({ name: bill.name, amount: bill.amount });
+          arr2.push({ name: bill.name, amount: bill.amount, dueDate: format(dueDate, 'yyyy-MM-dd') });
           billMap.set(candidate, arr2);
         }
       } else if (bill.category === 'housing') {
@@ -98,7 +100,7 @@ export function allocatePaychecks(
         const candidate = findAssignedPaycheck(paychecks, dueDate, paychecks);
         if (candidate !== null) {
           const arr = billMap.get(candidate) ?? [];
-          arr.push({ name: bill.name, amount: bill.amount });
+          arr.push({ name: bill.name, amount: bill.amount, dueDate: format(dueDate, 'yyyy-MM-dd') });
           billMap.set(candidate, arr);
         }
       } else {
@@ -108,7 +110,7 @@ export function allocatePaychecks(
         const candidate = findAssignedPaycheck(paychecks, dueDate, paychecks);
         if (candidate !== null) {
           const arr = billMap.get(candidate) ?? [];
-          arr.push({ name: bill.name, amount: bill.amount });
+          arr.push({ name: bill.name, amount: bill.amount, dueDate: format(dueDate, 'yyyy-MM-dd') });
           billMap.set(candidate, arr);
         }
       }
