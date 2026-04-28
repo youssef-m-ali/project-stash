@@ -99,6 +99,22 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
         </div>
       </section>
 
+      {/* Accounts */}
+      {(draft.accounts ?? []).length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Accounts</h3>
+          <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
+            {draft.accounts!.map((a) => (
+              <Row
+                key={a.id}
+                label={`${a.label}${a.isPassThrough ? ' · pass-through' : ''}`}
+                value={a.kind === 'chequing' ? 'Chequing' : 'Credit card'}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Projection */}
       <div className={`rounded-lg p-4 border ${meetsGoal ? 'border-emerald-700 bg-emerald-900/25' : 'border-amber-700 bg-amber-900/25'}`}>
         <p className="text-sm font-medium text-zinc-200">

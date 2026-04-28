@@ -9,6 +9,7 @@ import { StepFixed } from '@/components/questionnaire/StepFixed';
 import { StepVariable } from '@/components/questionnaire/StepVariable';
 import { StepSubscriptions } from '@/components/questionnaire/StepSubscriptions';
 import { StepSavings } from '@/components/questionnaire/StepSavings';
+import { StepAccounts } from '@/components/questionnaire/StepAccounts';
 import { StepReview } from '@/components/questionnaire/StepReview';
 import { sampleBudgetState } from '@/lib/budget/sampleData';
 
@@ -18,6 +19,7 @@ const STEP_LABELS = [
   'Variable expenses',
   'Subscriptions',
   'Savings goal',
+  'Accounts',
   'Review',
 ];
 
@@ -31,6 +33,7 @@ function buildInitialDraft(): Partial<BudgetState> {
     variableExpenses: [],
     subscriptions: [],
     savingsGoal: { targetRate: 0.3, buckets: [] },
+    accounts: [],
   };
 }
 
@@ -109,7 +112,8 @@ export default function SetupPage() {
           {step === 2 && <StepVariable {...stepProps} onNext={handleNext} />}
           {step === 3 && <StepSubscriptions {...stepProps} onNext={handleNext} />}
           {step === 4 && <StepSavings {...stepProps} onNext={handleNext} />}
-          {step === 5 && <StepReview {...stepProps} onFinish={handleFinish} />}
+          {step === 5 && <StepAccounts {...stepProps} onNext={handleNext} />}
+          {step === 6 && <StepReview {...stepProps} onFinish={handleFinish} />}
         </div>
       </div>
     </div>
