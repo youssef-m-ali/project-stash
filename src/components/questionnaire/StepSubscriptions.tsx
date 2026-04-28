@@ -48,7 +48,7 @@ export function StepSubscriptions({ draft, onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Subscriptions</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Subscriptions</h2>
         <p className="mt-1 text-sm text-zinc-500">
           Pull your last 90 days of bank/card statements to catch recurring charges. Most
           people miss 2–3. Leave rows empty to skip.
@@ -67,7 +67,7 @@ export function StepSubscriptions({ draft, onNext, onBack }: Props) {
         {fields.map((field, i) => {
           const rowErrors = errors.rows?.[i];
           return (
-            <div key={field.id} className="flex flex-col md:grid md:grid-cols-[1fr_110px_auto_auto_32px] gap-2 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-100 dark:border-zinc-800">
+            <div key={field.id} className="flex flex-col md:grid md:grid-cols-[1fr_110px_auto_auto_32px] gap-2 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50">
               <div>
                 <Input
                   placeholder="e.g. Netflix, Spotify"
@@ -89,11 +89,11 @@ export function StepSubscriptions({ draft, onNext, onBack }: Props) {
               </div>
               <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
                 <input type="checkbox" className="rounded accent-zinc-700" {...register(`rows.${i}.usedRecently`)} />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Used lately</span>
+                <span className="text-sm text-zinc-400">Used lately</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
                 <input type="checkbox" className="rounded accent-red-500" {...register(`rows.${i}.markedForCancel`)} />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">Cancel</span>
+                <span className="text-sm text-zinc-400">Cancel</span>
               </label>
               <button
                 type="button"
@@ -111,7 +111,7 @@ export function StepSubscriptions({ draft, onNext, onBack }: Props) {
       <button
         type="button"
         onClick={() => append({ id: uuid(), name: '', monthlyAmount: 0, usedRecently: true, markedForCancel: false })}
-        className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors self-start"
+        className="text-sm text-zinc-500 hover:text-zinc-100 transition-colors self-start"
       >
         + Add another
       </button>

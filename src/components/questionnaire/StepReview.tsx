@@ -31,27 +31,26 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Review</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Review</h2>
         <p className="mt-1 text-sm text-zinc-500">Double-check everything before we build your plan.</p>
       </div>
 
       {/* Income */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Income</h3>
-        <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Income</h3>
+        <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
           <Row label="Net per paycheck" value={income ? fmt(income.netPerPaycheck, currency) : '—'} />
           <Row label="Frequency" value="Biweekly" />
           <Row label="First paycheck date" value={income?.firstPaycheckDate ?? '—'} />
         </div>
       </section>
 
-      {/* Fixed expenses */}
       {(draft.fixedExpenses ?? []).length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-            Fixed expenses <span className="font-normal text-zinc-400">({fmt(fixedTotal, currency)}/mo)</span>
+          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+            Fixed expenses <span className="font-normal text-zinc-500">({fmt(fixedTotal, currency)}/mo)</span>
           </h3>
-          <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
             {draft.fixedExpenses!.map((e) => (
               <Row key={e.id} label={`${e.name} (due day ${e.dueDayOfMonth})`} value={fmt(e.amount, currency)} />
             ))}
@@ -59,13 +58,12 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
         </section>
       )}
 
-      {/* Variable expenses */}
       {(draft.variableExpenses ?? []).length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-            Variable expenses <span className="font-normal text-zinc-400">({fmt(variableTotal, currency)}/mo)</span>
+          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+            Variable expenses <span className="font-normal text-zinc-500">({fmt(variableTotal, currency)}/mo)</span>
           </h3>
-          <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
             {draft.variableExpenses!.map((e) => (
               <Row key={e.id} label={`${e.name}${e.isCap ? ' (cap)' : ''}`} value={fmt(e.monthlyBudget, currency)} />
             ))}
@@ -73,13 +71,12 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
         </section>
       )}
 
-      {/* Subscriptions */}
       {(draft.subscriptions ?? []).length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
-            Subscriptions <span className="font-normal text-zinc-400">({fmt(subTotal, currency)}/mo active)</span>
+          <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+            Subscriptions <span className="font-normal text-zinc-500">({fmt(subTotal, currency)}/mo active)</span>
           </h3>
-          <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
             {draft.subscriptions!.map((s) => (
               <Row
                 key={s.id}
@@ -92,10 +89,9 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
         </section>
       )}
 
-      {/* Savings goal */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Savings goal</h3>
-        <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Savings goal</h3>
+        <div className="rounded-lg border border-zinc-600 divide-y divide-zinc-600">
           <Row label="Target rate" value={`${Math.round(targetRate * 100)}%`} />
           {(draft.savingsGoal?.buckets ?? []).map((b) => (
             <Row key={b.id} label={b.name} value={`${Math.round(b.percentageOfSavings * 100)}%`} />
@@ -104,8 +100,8 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
       </section>
 
       {/* Projection */}
-      <div className={`rounded-lg p-4 border ${meetsGoal ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950' : 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950'}`}>
-        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+      <div className={`rounded-lg p-4 border ${meetsGoal ? 'border-emerald-700 bg-emerald-900/25' : 'border-amber-700 bg-amber-900/25'}`}>
+        <p className="text-sm font-medium text-zinc-200">
           Your projected monthly savings will be{' '}
           <span className="font-bold">{fmt(Math.max(0, monthlySavings), currency)}</span>{' '}
           ({Math.round(Math.max(0, savingsRate) * 100)}% of income).{' '}
@@ -128,8 +124,8 @@ export function StepReview({ draft, onFinish, onBack }: Props) {
 function Row({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
   return (
     <div className={`flex items-center justify-between px-3 py-2 text-sm ${muted ? 'opacity-40 line-through' : ''}`}>
-      <span className="text-zinc-600 dark:text-zinc-400">{label}</span>
-      <span className="font-medium text-zinc-900 dark:text-zinc-100">{value}</span>
+      <span className="text-zinc-400">{label}</span>
+      <span className="font-medium text-zinc-100">{value}</span>
     </div>
   );
 }

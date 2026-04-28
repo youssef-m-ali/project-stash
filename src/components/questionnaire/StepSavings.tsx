@@ -80,14 +80,14 @@ export function StepSavings({ draft, onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Savings goal</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Savings goal</h2>
         <p className="mt-1 text-sm text-zinc-500">Set your target savings rate and name your buckets.</p>
       </div>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <Label htmlFor="targetRatePct">Target savings rate</Label>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-100 tabular-nums">
             {Number(watchedRate ?? 30)}%
           </span>
         </div>
@@ -97,7 +97,7 @@ export function StepSavings({ draft, onNext, onBack }: Props) {
           min={10}
           max={80}
           step={1}
-          className="w-full accent-zinc-900 dark:accent-zinc-100"
+          className="w-full accent-zinc-100"
           {...register('targetRatePct')}
         />
         <div className="flex justify-between text-xs text-zinc-400">
@@ -106,7 +106,7 @@ export function StepSavings({ draft, onNext, onBack }: Props) {
         </div>
         {incomePerPaycheck > 0 && (
           <p className="text-sm text-zinc-500">
-            ≈ <span className="font-medium text-zinc-700 dark:text-zinc-300">${Math.round(monthlySavings).toLocaleString()}</span> / month
+            ≈ <span className="font-medium text-zinc-200">${Math.round(monthlySavings).toLocaleString()}</span> / month
           </p>
         )}
       </div>
@@ -114,7 +114,7 @@ export function StepSavings({ draft, onNext, onBack }: Props) {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <Label>Savings buckets</Label>
-          <span className={`text-xs font-medium ${Math.abs(bucketTotal - 100) < 0.5 ? 'text-emerald-600' : 'text-red-500'}`}>
+          <span className={`text-xs font-medium ${Math.abs(bucketTotal - 100) < 0.5 ? 'text-emerald-400' : 'text-red-400'}`}>
             {Math.round(bucketTotal)}% allocated
           </span>
         </div>
@@ -176,7 +176,7 @@ export function StepSavings({ draft, onNext, onBack }: Props) {
         <button
           type="button"
           onClick={() => append({ id: uuid(), name: '', percentageOfSavings: 0 })}
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors self-start mt-6"
+          className="text-sm text-zinc-500 hover:text-zinc-100 transition-colors self-start mt-6"
         >
           + Add bucket
         </button>
