@@ -72,7 +72,7 @@ export default function SetupPage() {
   const stepProps = { draft, onBack: handleBack };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen flex flex-col items-center py-10 px-4">
       <div className="w-full max-w-2xl flex flex-col gap-8">
         {/* Progress */}
         <div className="flex flex-col gap-2">
@@ -80,9 +80,9 @@ export default function SetupPage() {
             <span>Step {step + 1} of {TOTAL_STEPS}</span>
             <span>{STEP_LABELS[step]}</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div className="h-1.5 w-full rounded-full bg-zinc-600">
             <div
-              className="h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 transition-all duration-300"
+              className="h-1.5 rounded-full bg-zinc-100 transition-all duration-300"
               style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
             />
           </div>
@@ -92,10 +92,10 @@ export default function SetupPage() {
                 key={label}
                 className={`flex-1 text-center text-[10px] font-medium truncate px-0.5 transition-colors ${
                   i === step
-                    ? 'text-zinc-900 dark:text-zinc-100'
+                    ? 'text-zinc-100'
                     : i < step
                     ? 'text-zinc-500'
-                    : 'text-zinc-300 dark:text-zinc-700'
+                    : 'text-zinc-600'
                 }`}
               >
                 {label}
@@ -105,7 +105,7 @@ export default function SetupPage() {
         </div>
 
         {/* Step content */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 md:p-8">
+        <div className="bg-zinc-700 rounded-xl border border-zinc-600 p-6 md:p-8">
           {step === 0 && <StepIncome {...stepProps} onNext={handleNext} />}
           {step === 1 && <StepFixed {...stepProps} onNext={handleNext} />}
           {step === 2 && <StepVariable {...stepProps} onNext={handleNext} />}

@@ -55,7 +55,7 @@ export function StepVariable({ draft, onNext, onBack }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Variable expenses</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Variable expenses</h2>
         <p className="mt-1 text-sm text-zinc-500">
           Set a monthly budget for each category. Leave at 0 to skip. &ldquo;Hard cap&rdquo; means
           you&apos;ll treat it as a strict limit rather than a soft target.
@@ -73,7 +73,7 @@ export function StepVariable({ draft, onNext, onBack }: Props) {
         {fields.map((field, i) => {
           const rowErrors = errors.rows?.[i];
           return (
-            <div key={field.id} className="flex flex-col md:grid md:grid-cols-[1fr_110px_auto_32px] gap-2 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-100 dark:border-zinc-800">
+            <div key={field.id} className="flex flex-col md:grid md:grid-cols-[1fr_110px_auto_32px] gap-2 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50">
               <div>
                 <Input
                   placeholder="Category name"
