@@ -15,11 +15,10 @@ interface PreviewRequestBody {
 export async function POST(request: Request) {
   const { files } = (await request.json()) as PreviewRequestBody;
 
-  const state = db.prepare('SELECT data FROM budget_state WHERE id = 1').get() as { data: string } | undefined;
-  if (!state) return Response.json({ error: 'No budget state found' }, { status: 400 });
-
-  const budgetState = JSON.parse(state.data);
-  const accounts: Account[] = budgetState.accounts ?? [];
+  type AccountRow = { id: string; label: string; kind: string; is_pass_through: number };
+  const accounts: Account[] = (
+    db.prepare('SELECT id, label, kind, is_pass_through FROM accounts').all() as AccountRow[]
+  ).map((r) => ({ id: r.id, label: r.label, kind: r.kind as Account['kind'], isPassThrough: Boolean(r.is_pass_through) }));
   type RuleRow = { id: string; pattern: string; category_id: string; priority: number; created_at: string };
   const rules: CategoryRule[] = (db
     .prepare('SELECT id, pattern, category_id, priority, created_at FROM category_rules ORDER BY priority ASC')
