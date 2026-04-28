@@ -22,6 +22,31 @@ db.exec(`
     month_key TEXT PRIMARY KEY,
     data      TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS transactions (
+    id            TEXT PRIMARY KEY,
+    account_id    TEXT NOT NULL,
+    date          TEXT NOT NULL,
+    month_key     TEXT NOT NULL,
+    description   TEXT NOT NULL,
+    amount        REAL NOT NULL,
+    raw_amount    REAL NOT NULL,
+    category_id   TEXT,
+    status        TEXT NOT NULL DEFAULT 'active',
+    ignore_reason TEXT,
+    imported_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_tx_month   ON transactions (month_key);
+  CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions (account_id);
+
+  CREATE TABLE IF NOT EXISTS category_rules (
+    id          TEXT PRIMARY KEY,
+    pattern     TEXT NOT NULL,
+    category_id TEXT NOT NULL,
+    priority    INTEGER NOT NULL DEFAULT 100,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_rules_priority ON category_rules (priority ASC);
 `);
 
 export default db;

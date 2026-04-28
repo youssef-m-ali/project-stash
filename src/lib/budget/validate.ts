@@ -41,7 +41,17 @@ export function validateBudgetState(state: BudgetState): ValidationResult {
     }
   }
 
-  // No duplicate IDs
+  // No duplicate account IDs
+  const accountIds = (state.accounts ?? []).map((a) => a.id);
+  const accountIdSet = new Set<string>();
+  for (const id of accountIds) {
+    if (accountIdSet.has(id)) {
+      errors.push({ field: 'accounts', message: `Duplicate account ID: ${id}` });
+    }
+    accountIdSet.add(id);
+  }
+
+  // No duplicate IDs across budget items
   const allIds = [
     ...state.fixedExpenses.map((e) => e.id),
     ...state.variableExpenses.map((e) => e.id),

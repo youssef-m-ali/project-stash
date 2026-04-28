@@ -42,6 +42,15 @@ export type SavingsGoal = {
   buckets: SavingsBucket[];
 };
 
+export type AccountKind = 'chequing' | 'credit-card';
+
+export type Account = {
+  id: string;
+  label: string;
+  kind: AccountKind;
+  isPassThrough: boolean;
+};
+
 export type BudgetState = {
   schemaVersion: number;
   currency: string;
@@ -52,6 +61,36 @@ export type BudgetState = {
   variableExpenses: VariableExpense[];
   subscriptions: Subscription[];
   savingsGoal: SavingsGoal;
+  accounts: Account[];
+};
+
+export type Transaction = {
+  id: string;               // sha256(date|description|rawAmount|accountId).slice(0,16)
+  accountId: string;        // FK → Account.id
+  date: string;             // YYYY-MM-DD
+  monthKey: string;         // YYYY-MM
+  description: string;
+  amount: number;           // normalized: spending = positive, refund/credit = negative
+  rawAmount: number;        // original signed value from CSV
+  categoryId: string | null;
+  status: 'active' | 'ignored';
+  ignoreReason: string | null;
+  importedAt: string;
+};
+
+export type CategoryRule = {
+  id: string;
+  pattern: string;          // case-insensitive substring match on description
+  categoryId: string;
+  priority: number;         // lower = higher priority; first match wins
+  createdAt: string;
+};
+
+// Ephemeral — import preview only, never persisted
+export type ParsedTransaction = Omit<Transaction, 'id' | 'importedAt'> & {
+  tempId: string;
+  duplicate: boolean;
+  userOverrideCategory: string | null;
 };
 
 export type Paycheck = {

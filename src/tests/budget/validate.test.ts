@@ -26,6 +26,7 @@ const validState: BudgetState = {
     targetRate: 0.3,
     buckets: [{ id: 'gen', name: 'General', percentageOfSavings: 1 }],
   },
+  accounts: [],
 };
 
 describe('validateBudgetState', () => {

@@ -40,5 +40,6 @@ export function sampleBudgetState(): BudgetState {
         { id: uuid(), name: 'House fund', percentageOfSavings: 0.5 },
       ],
     },
+    accounts: [],
   };
 }
