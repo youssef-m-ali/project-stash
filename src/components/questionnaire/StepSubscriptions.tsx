@@ -13,6 +13,7 @@ const rowSchema = z.object({
   id: z.string(),
   name: z.string().min(1, 'Required'),
   monthlyAmount: z.coerce.number().min(0, 'Must be ≥ 0'),
+  dueDayOfMonth: z.coerce.number().int().min(1).max(31).default(1),
   usedRecently: z.boolean(),
   markedForCancel: z.boolean(),
 });
@@ -31,7 +32,7 @@ export function StepSubscriptions({ draft, onNext, onBack }: Props) {
   const existing = draft.subscriptions ?? [];
   const initialRows = existing.length
     ? existing
-    : [{ id: uuid(), name: '', monthlyAmount: 0, usedRecently: true, markedForCancel: false }];
+    : [{ id: uuid(), name: '', monthlyAmount: 0, dueDayOfMonth: 1, usedRecently: true, markedForCancel: false }];
 
   const { register, control, handleSubmit, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),

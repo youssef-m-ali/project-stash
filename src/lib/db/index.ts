@@ -61,6 +61,7 @@ db.exec(`
     id                TEXT    PRIMARY KEY,
     name              TEXT    NOT NULL,
     monthly_amount    REAL    NOT NULL,
+    due_day_of_month  INTEGER NOT NULL DEFAULT 1,
     used_recently     INTEGER NOT NULL DEFAULT 1,
     marked_for_cancel INTEGER NOT NULL DEFAULT 0
   );
@@ -228,5 +229,11 @@ function migrateBudgetStateBlob() {
 }
 
 migrateBudgetStateBlob();
+
+// Add due_day_of_month to subscriptions if upgrading an existing DB
+const subCols = (db.prepare(`PRAGMA table_info(subscriptions)`).all() as { name: string }[]).map(r => r.name);
+if (!subCols.includes('due_day_of_month')) {
+  db.prepare(`ALTER TABLE subscriptions ADD COLUMN due_day_of_month INTEGER NOT NULL DEFAULT 1`).run();
+}
 
 export default db;

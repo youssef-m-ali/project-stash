@@ -95,7 +95,7 @@ describe('allocatePaychecks', () => {
   });
 
   it('subscriptions are included as a synthetic bill', () => {
-    const sub: Subscription = { id: 's1', name: 'Netflix', monthlyAmount: 20, usedRecently: true, markedForCancel: false };
+    const sub: Subscription = { id: 's1', name: 'Netflix', monthlyAmount: 20, dueDayOfMonth: 1, usedRecently: true, markedForCancel: false };
     const paychecks = generatePaychecks('2026-05-01', 2000, 6);
     const allocations = allocatePaychecks(paychecks, [], [], [sub]);
     const hasSub = allocations.some((a) => a.billsPaid.some((b) => b.name === 'Subscriptions'));
@@ -103,7 +103,7 @@ describe('allocatePaychecks', () => {
   });
 
   it('cancelled subscriptions are excluded from bills', () => {
-    const sub: Subscription = { id: 's1', name: 'Netflix', monthlyAmount: 20, usedRecently: true, markedForCancel: true };
+    const sub: Subscription = { id: 's1', name: 'Netflix', monthlyAmount: 20, dueDayOfMonth: 1, usedRecently: true, markedForCancel: true };
     const paychecks = generatePaychecks('2026-05-01', 2000, 6);
     const allocations = allocatePaychecks(paychecks, [], [], [sub]);
     const hasSub = allocations.some((a) => a.billsPaid.some((b) => b.name === 'Subscriptions'));

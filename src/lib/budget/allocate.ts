@@ -1,12 +1,6 @@
 import { getDaysInMonth, format } from 'date-fns';
 import type { Paycheck, PaycheckAllocation, FixedExpense, VariableExpense, Subscription } from '../types';
 
-function subscriptionTotal(subscriptions: Subscription[]): number {
-  return subscriptions
-    .filter((s) => !s.markedForCancel)
-    .reduce((sum, s) => sum + s.monthlyAmount, 0);
-}
-
 function prevMonthKey(monthKey: string): string {
   const [y, m] = monthKey.split('-').map(Number);
   return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
@@ -37,20 +31,19 @@ export function allocatePaychecks(
   const variableAllowancePerPaycheck =
     variableExpenses.reduce((s, e) => s + e.monthlyBudget, 0) / 2;
 
-  // Build the synthetic subscriptions fixed expense if there are active subs
-  const subTotal = subscriptionTotal(subscriptions);
-  const allFixed: FixedExpense[] = subTotal > 0
-    ? [
-        ...fixedExpenses,
-        {
-          id: '__subscriptions__',
-          name: 'Subscriptions',
-          amount: subTotal,
-          dueDayOfMonth: 1,
-          category: 'subscription',
-        },
-      ]
-    : [...fixedExpenses];
+  // Each active subscription becomes its own synthetic fixed expense
+  const allFixed: FixedExpense[] = [
+    ...fixedExpenses,
+    ...subscriptions
+      .filter((s) => !s.markedForCancel)
+      .map((s) => ({
+        id: `__sub__${s.id}`,
+        name: s.name,
+        amount: s.monthlyAmount,
+        dueDayOfMonth: s.dueDayOfMonth,
+        category: 'subscription' as const,
+      })),
+  ];
 
   // For each bill, figure out which paycheck it belongs to
   // We'll build a map: paycheckIndex -> bills[]

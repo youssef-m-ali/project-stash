@@ -459,7 +459,7 @@ function SubFields({
   onChange: (f: Partial<Subscription>) => void;
 }) {
   return (
-    <div className="grid sm:grid-cols-3 gap-2 items-center">
+    <div className="grid sm:grid-cols-4 gap-2 items-center">
       <input
         className={cx.input}
         placeholder="Name"
@@ -473,6 +473,15 @@ function SubFields({
         value={form.monthlyAmount ?? ''}
         min={0}
         onChange={(e) => onChange({ ...form, monthlyAmount: parseFloat(e.target.value) || 0 })}
+      />
+      <input
+        type="number"
+        className={cx.input}
+        placeholder="Due day"
+        value={form.dueDayOfMonth ?? ''}
+        min={1}
+        max={31}
+        onChange={(e) => onChange({ ...form, dueDayOfMonth: parseInt(e.target.value) || 1 })}
       />
       <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
         <input
@@ -500,7 +509,7 @@ function SubsSection({ state, reload }: { state: BudgetState; reload: () => void
 
   function startAdd() {
     setEditingId('__new__');
-    setForm({ id: uid(), name: '', monthlyAmount: 0, usedRecently: true, markedForCancel: false });
+    setForm({ id: uid(), name: '', monthlyAmount: 0, dueDayOfMonth: 1, usedRecently: true, markedForCancel: false });
   }
 
   async function commit() {
@@ -588,6 +597,7 @@ function SubsSection({ state, reload }: { state: BudgetState; reload: () => void
               >
                 {item.name}
               </span>
+              <span className="text-xs text-zinc-500 ml-2">due {item.dueDayOfMonth}</span>
               {!item.usedRecently && !item.markedForCancel && (
                 <span className="text-xs text-amber-500 ml-2">unused</span>
               )}

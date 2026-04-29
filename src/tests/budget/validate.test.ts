@@ -20,7 +20,7 @@ const validState: BudgetState = {
     { id: 'groceries', name: 'Groceries', monthlyBudget: 400, isCap: false },
   ],
   subscriptions: [
-    { id: 'netflix', name: 'Netflix', monthlyAmount: 18, usedRecently: true, markedForCancel: false },
+    { id: 'netflix', name: 'Netflix', monthlyAmount: 18, dueDayOfMonth: 1, usedRecently: true, markedForCancel: false },
   ],
   savingsGoal: {
     targetRate: 0.3,

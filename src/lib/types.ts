@@ -26,6 +26,7 @@ export type Subscription = {
   id: string;
   name: string;
   monthlyAmount: number;
+  dueDayOfMonth: number;
   usedRecently: boolean;
   markedForCancel: boolean;
 };

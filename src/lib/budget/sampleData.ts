@@ -29,9 +29,9 @@ export function sampleBudgetState(): BudgetState {
       { id: uuid(), name: 'Buffer', monthlyBudget: 100, isCap: false },
     ],
     subscriptions: [
-      { id: uuid(), name: 'Netflix', monthlyAmount: 17, usedRecently: true, markedForCancel: false },
-      { id: uuid(), name: 'Spotify', monthlyAmount: 11, usedRecently: true, markedForCancel: false },
-      { id: uuid(), name: 'Gym', monthlyAmount: 40, usedRecently: false, markedForCancel: false },
+      { id: uuid(), name: 'Netflix', monthlyAmount: 17, dueDayOfMonth: 1, usedRecently: true, markedForCancel: false },
+      { id: uuid(), name: 'Spotify', monthlyAmount: 11, dueDayOfMonth: 15, usedRecently: true, markedForCancel: false },
+      { id: uuid(), name: 'Gym', monthlyAmount: 40, dueDayOfMonth: 1, usedRecently: false, markedForCancel: false },
     ],
     savingsGoal: {
       targetRate: 0.3,

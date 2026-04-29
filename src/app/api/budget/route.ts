@@ -7,7 +7,7 @@ type ConfigRow = { currency: string; schema_version: number; created_at: string;
 type IncomeRow = { net_per_paycheck: number; frequency: string; first_paycheck_date: string; pay_day_of_week: number };
 type FixedRow = { id: string; name: string; amount: number; due_day_of_month: number; category: string };
 type VarRow = { id: string; name: string; monthly_budget: number; is_cap: number };
-type SubRow = { id: string; name: string; monthly_amount: number; used_recently: number; marked_for_cancel: number };
+type SubRow = { id: string; name: string; monthly_amount: number; due_day_of_month: number; used_recently: number; marked_for_cancel: number };
 type GoalRow = { target_rate: number };
 type BucketRow = { id: string; name: string; percentage_of_savings: number; notes: string | null };
 type AccountRow = { id: string; label: string; kind: string; is_pass_through: number };
@@ -23,7 +23,7 @@ export async function GET() {
 
   const fixedRows = db.prepare('SELECT id, name, amount, due_day_of_month, category FROM fixed_expenses ORDER BY sort_order').all() as FixedRow[];
   const varRows = db.prepare('SELECT id, name, monthly_budget, is_cap FROM variable_expenses ORDER BY sort_order').all() as VarRow[];
-  const subRows = db.prepare('SELECT id, name, monthly_amount, used_recently, marked_for_cancel FROM subscriptions').all() as SubRow[];
+  const subRows = db.prepare('SELECT id, name, monthly_amount, due_day_of_month, used_recently, marked_for_cancel FROM subscriptions').all() as SubRow[];
   const goal = db.prepare('SELECT target_rate FROM savings_goal WHERE id = 1').get() as GoalRow | undefined;
   const bucketRows = db.prepare('SELECT id, name, percentage_of_savings, notes FROM savings_buckets ORDER BY sort_order').all() as BucketRow[];
   const accountRows = db.prepare('SELECT id, label, kind, is_pass_through FROM accounts').all() as AccountRow[];
@@ -56,6 +56,7 @@ export async function GET() {
       id: r.id,
       name: r.name,
       monthlyAmount: r.monthly_amount,
+      dueDayOfMonth: r.due_day_of_month,
       usedRecently: Boolean(r.used_recently),
       markedForCancel: Boolean(r.marked_for_cancel),
     })),
@@ -124,12 +125,12 @@ export async function POST(request: Request) {
     state.variableExpenses.forEach((e, i) => insertVar.run(e.id, e.name, e.monthlyBudget, e.isCap ? 1 : 0, i));
 
     const insertSub = db.prepare(`
-      INSERT INTO subscriptions (id, name, monthly_amount, used_recently, marked_for_cancel)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO subscriptions (id, name, monthly_amount, due_day_of_month, used_recently, marked_for_cancel)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
     db.prepare('DELETE FROM subscriptions').run();
     state.subscriptions.forEach((s) =>
-      insertSub.run(s.id, s.name, s.monthlyAmount, s.usedRecently ? 1 : 0, s.markedForCancel ? 1 : 0),
+      insertSub.run(s.id, s.name, s.monthlyAmount, s.dueDayOfMonth, s.usedRecently ? 1 : 0, s.markedForCancel ? 1 : 0),
     );
 
     db.prepare(`INSERT OR REPLACE INTO savings_goal (id, target_rate) VALUES (1, ?)`)
