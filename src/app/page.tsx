@@ -2,14 +2,24 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { storageAdapter } from '@/lib/storage/sqliteAdapter';
 
 export default function WelcomePage() {
-  const [hasSavedState, setHasSavedState] = useState(false);
+  const router = useRouter();
+  const [hasSavedState, setHasSavedState] = useState<boolean | null>(null);
 
   useEffect(() => {
-    storageAdapter.loadState().then((s) => setHasSavedState(s !== null));
-  }, []);
+    storageAdapter.loadState().then((s) => {
+      if (s !== null) {
+        router.replace('/dashboard');
+      } else {
+        setHasSavedState(false);
+      }
+    });
+  }, [router]);
+
+  if (hasSavedState === null) return null;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
@@ -25,37 +35,18 @@ export default function WelcomePage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {hasSavedState ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="flex h-12 items-center justify-center rounded-lg bg-zinc-100 px-6 text-base font-medium text-zinc-900 transition-colors hover:bg-white"
-              >
-                Continue to dashboard
-              </Link>
-              <Link
-                href="/setup"
-                className="flex h-12 items-center justify-center rounded-lg border border-zinc-600 px-6 text-base font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
-              >
-                Start questionnaire
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/setup"
-                className="flex h-12 items-center justify-center rounded-lg bg-zinc-100 px-6 text-base font-medium text-zinc-900 transition-colors hover:bg-white"
-              >
-                Start questionnaire
-              </Link>
-              <Link
-                href="/setup?sample=1"
-                className="flex h-12 items-center justify-center rounded-lg border border-zinc-600 px-6 text-base font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
-              >
-                Try with sample data
-              </Link>
-            </>
-          )}
+          <Link
+            href="/setup"
+            className="flex h-12 items-center justify-center rounded-lg bg-zinc-100 px-6 text-base font-medium text-zinc-900 transition-colors hover:bg-white"
+          >
+            Start questionnaire
+          </Link>
+          <Link
+            href="/setup?sample=1"
+            className="flex h-12 items-center justify-center rounded-lg border border-zinc-600 px-6 text-base font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+          >
+            Try with sample data
+          </Link>
         </div>
 
         <p className="text-sm text-zinc-500 text-center">
