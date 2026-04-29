@@ -8,8 +8,7 @@ const TABS = [
   { label: 'Per Paycheck',  href: '/dashboard/per-paycheck', exact: false },
   { label: 'Monthly',       href: '/dashboard/monthly',      exact: false },
   { label: 'Import',        href: '/dashboard/import',       exact: false },
-  { label: 'Subscriptions', href: '/dashboard/subscriptions', exact: false },
-  { label: 'Settings',      href: '/dashboard/settings',      exact: false },
+  { label: 'Settings', href: '/dashboard/settings', exact: false },
 ];
 
 export function DashboardNav() {
