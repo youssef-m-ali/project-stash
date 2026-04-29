@@ -8,8 +8,8 @@ const TABS = [
   { label: 'Per Paycheck',  href: '/dashboard/per-paycheck', exact: false },
   { label: 'Monthly',       href: '/dashboard/monthly',      exact: false },
   { label: 'Import',        href: '/dashboard/import',       exact: false },
-  { label: 'Subscriptions', href: '/dashboard/subscriptions',exact: false, soon: true },
-  { label: 'Settings',      href: '/dashboard/settings',     exact: false, soon: true },
+  { label: 'Subscriptions', href: '/dashboard/subscriptions', exact: false },
+  { label: 'Settings',      href: '/dashboard/settings',      exact: false },
 ];
 
 export function DashboardNav() {
@@ -25,27 +25,17 @@ export function DashboardNav() {
         <div className="flex items-center gap-1 h-12 overflow-x-auto">
           <span className="text-sm font-semibold text-zinc-100 mr-4 shrink-0">Stash Up</span>
           {TABS.map((tab) => (
-            tab.soon ? (
-              <span
-                key={tab.href}
-                className="shrink-0 px-3 py-1.5 text-sm text-zinc-600 cursor-not-allowed select-none"
-                title="Coming soon"
-              >
-                {tab.label}
-              </span>
-            ) : (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`shrink-0 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  isActive(tab)
-                    ? 'bg-zinc-700 text-zinc-100 font-medium'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
-                }`}
-              >
-                {tab.label}
-              </Link>
-            )
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`shrink-0 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                isActive(tab)
+                  ? 'bg-zinc-700 text-zinc-100 font-medium'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
+              }`}
+            >
+              {tab.label}
+            </Link>
           ))}
         </div>
       </div>
