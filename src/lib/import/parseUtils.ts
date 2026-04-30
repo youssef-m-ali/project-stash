@@ -1,8 +1,6 @@
 import { v4 as uuid } from 'uuid';
-import type { Account, CategoryRule, ParsedTransaction } from '@/lib/types';
-import { hashTransaction } from './hashTransaction';
+import type { Account, ParsedTransaction } from '@/lib/types';
 import { applyIgnoreRules } from './applyIgnoreRules';
-import { applyCategoryRules } from './applyCategoryRules';
 
 /** Strip BOM and split CSV text into rows, skipping blank lines. */
 export function splitRows(csv: string): string[] {
@@ -28,16 +26,10 @@ export function splitCols(line: string): string[] {
 export function normalizeDate(raw: string): string {
   const clean = raw.trim();
   if (/^\d{4}[\/\-]/.test(clean)) {
-    // YYYY/MM/DD
     return clean.replace(/\//g, '-');
   }
-  // MM/DD/YYYY
   const [m, d, y] = clean.split('/');
   return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-}
-
-export function monthKey(isoDate: string): string {
-  return isoDate.slice(0, 7);
 }
 
 export function buildParsedTx(
@@ -45,24 +37,21 @@ export function buildParsedTx(
   description: string,
   rawAmount: number,
   account: Account,
-  rules: CategoryRule[],
 ): ParsedTransaction {
-  const { status, ignoreReason } = applyIgnoreRules(description, rawAmount, account);
+  const { status } = applyIgnoreRules(description, rawAmount, account);
   const amount = account.kind === 'credit-card' ? rawAmount : Math.abs(rawAmount);
-  const categoryId = status === 'active' ? applyCategoryRules(description, rules) : null;
 
   return {
     tempId: uuid(),
     accountId: account.id,
     date,
-    monthKey: monthKey(date),
     description,
     amount,
     rawAmount,
-    categoryId,
+    bucketId: null,
+    periodId: null,
+    suggestedBucketId: null,
     status,
-    ignoreReason,
     duplicate: false,
-    userOverrideCategory: null,
   };
 }

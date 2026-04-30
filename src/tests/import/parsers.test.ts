@@ -2,17 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { detectFormat } from '@/lib/import/detectFormat';
 import { normalizeDate, splitCols } from '@/lib/import/parseUtils';
 import { applyIgnoreRules } from '@/lib/import/applyIgnoreRules';
-import { applyCategoryRules } from '@/lib/import/applyCategoryRules';
 import { hashTransaction } from '@/lib/import/hashTransaction';
 import { parseCibcChequing } from '@/lib/import/parseCibcChequing';
 import { parseCibcCc } from '@/lib/import/parseCibcCc';
 import { parseScotiabankCc } from '@/lib/import/parseScotiabankCc';
-import type { Account, CategoryRule } from '@/lib/types';
+import type { Account } from '@/lib/types';
 
 const chequingAccount: Account = { id: 'acc-1', label: 'Main chequing', kind: 'chequing', isPassThrough: false };
 const ccAccount: Account      = { id: 'acc-2', label: 'My CC',          kind: 'credit-card', isPassThrough: false };
 const passThroughAccount: Account = { id: 'acc-3', label: 'Scotia chequing', kind: 'chequing', isPassThrough: true };
-const noRules: CategoryRule[] = [];
 
 // ─── detectFormat ────────────────────────────────────────────────────────────
 
@@ -96,7 +94,7 @@ describe('applyIgnoreRules', () => {
   });
   it('does NOT ignore positive CC charge', () => {
     const r = applyIgnoreRules('Amazon.ca', 35.99, ccAccount);
-    expect(r.status).toBe('active');
+    expect(r.status).toBe('pending');
   });
   it('ignores CC payment on chequing by description', () => {
     const r = applyIgnoreRules('VISA PAYMENT', -450, chequingAccount);
@@ -113,30 +111,9 @@ describe('applyIgnoreRules', () => {
     expect(r.status).toBe('ignored');
     expect(r.ignoreReason).toBe('payroll');
   });
-  it('keeps a normal chequing debit as active', () => {
+  it('keeps a normal chequing debit as pending', () => {
     const r = applyIgnoreRules('TIM HORTONS #1234', 4.75, chequingAccount);
-    expect(r.status).toBe('active');
-  });
-});
-
-// ─── applyCategoryRules ──────────────────────────────────────────────────────
-
-describe('applyCategoryRules', () => {
-  const rules: CategoryRule[] = [
-    { id: 'r1', pattern: 'tim hortons', categoryId: 'cat-coffee', priority: 10, createdAt: '' },
-    { id: 'r2', pattern: 'amazon',      categoryId: 'cat-shopping', priority: 20, createdAt: '' },
-    { id: 'r3', pattern: 'tim',         categoryId: 'cat-other',  priority: 5,  createdAt: '' },
-  ];
-
-  it('returns null when no rule matches', () => {
-    expect(applyCategoryRules('Grocery Store', rules)).toBeNull();
-  });
-  it('matches case-insensitively', () => {
-    expect(applyCategoryRules('TIM HORTONS DOWNTOWN', rules)).toBe('cat-other'); // priority 5 wins
-  });
-  it('applies lowest priority number first', () => {
-    // "tim" (priority 5) matches before "tim hortons" (priority 10)
-    expect(applyCategoryRules('Tim Hortons', rules)).toBe('cat-other');
+    expect(r.status).toBe('pending');
   });
 });
 
@@ -151,29 +128,27 @@ describe('parseCibcChequing', () => {
   ].join('\n');
 
   it('parses all rows', () => {
-    const txs = parseCibcChequing(csv, chequingAccount, noRules);
+    const txs = parseCibcChequing(csv, chequingAccount);
     expect(txs.length).toBe(3);
   });
   it('normalizes date', () => {
-    const txs = parseCibcChequing(csv, chequingAccount, noRules);
+    const txs = parseCibcChequing(csv, chequingAccount);
     expect(txs[0].date).toBe('2026-05-01');
   });
   it('marks payroll as ignored', () => {
-    const txs = parseCibcChequing(csv, chequingAccount, noRules);
-    const payroll = txs.find((t) => t.description.includes('PAYROLL'));
+    const txs = parseCibcChequing(csv, chequingAccount);
+    const payroll = txs.find(t => t.description.includes('PAYROLL'));
     expect(payroll?.status).toBe('ignored');
-    expect(payroll?.ignoreReason).toBe('payroll');
   });
   it('marks interac as ignored', () => {
-    const txs = parseCibcChequing(csv, chequingAccount, noRules);
-    const interac = txs.find((t) => t.description.includes('INTERAC'));
+    const txs = parseCibcChequing(csv, chequingAccount);
+    const interac = txs.find(t => t.description.includes('INTERAC'));
     expect(interac?.status).toBe('ignored');
-    expect(interac?.ignoreReason).toBe('interac-transfer');
   });
-  it('keeps regular debit as active', () => {
-    const txs = parseCibcChequing(csv, chequingAccount, noRules);
-    const spend = txs.find((t) => t.description.includes('TIM HORTONS'));
-    expect(spend?.status).toBe('active');
+  it('keeps regular debit as pending', () => {
+    const txs = parseCibcChequing(csv, chequingAccount);
+    const spend = txs.find(t => t.description.includes('TIM HORTONS'));
+    expect(spend?.status).toBe('pending');
   });
 });
 
@@ -187,17 +162,16 @@ describe('parseCibcCc', () => {
   ].join('\n');
 
   it('parses charge as positive rawAmount', () => {
-    const txs = parseCibcCc(csv, ccAccount, noRules);
-    const amazon = txs.find((t) => t.description.includes('AMAZON'));
+    const txs = parseCibcCc(csv, ccAccount);
+    const amazon = txs.find(t => t.description.includes('AMAZON'));
     expect(amazon?.rawAmount).toBe(45.99);
-    expect(amazon?.status).toBe('active');
+    expect(amazon?.status).toBe('pending');
   });
   it('parses payment as negative and ignores it', () => {
-    const txs = parseCibcCc(csv, ccAccount, noRules);
-    const payment = txs.find((t) => t.description.includes('PAYMENT'));
+    const txs = parseCibcCc(csv, ccAccount);
+    const payment = txs.find(t => t.description.includes('PAYMENT'));
     expect(payment?.rawAmount).toBe(-500);
     expect(payment?.status).toBe('ignored');
-    expect(payment?.ignoreReason).toBe('cc-payment');
   });
 });
 
@@ -211,16 +185,16 @@ describe('parseScotiabankCc', () => {
   ].join('\n');
 
   it('concatenates description 1 and 2', () => {
-    const txs = parseScotiabankCc(csv, ccAccount, noRules);
+    const txs = parseScotiabankCc(csv, ccAccount);
     expect(txs[0].description).toBe('NETFLIX STREAMING');
   });
   it('converts MM/DD/YYYY date', () => {
-    const txs = parseScotiabankCc(csv, ccAccount, noRules);
+    const txs = parseScotiabankCc(csv, ccAccount);
     expect(txs[0].date).toBe('2026-05-10');
   });
   it('ignores payment credit', () => {
-    const txs = parseScotiabankCc(csv, ccAccount, noRules);
-    const pmt = txs.find((t) => t.rawAmount < 0);
+    const txs = parseScotiabankCc(csv, ccAccount);
+    const pmt = txs.find(t => t.rawAmount < 0);
     expect(pmt?.status).toBe('ignored');
   });
 });

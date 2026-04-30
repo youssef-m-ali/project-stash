@@ -1,31 +1,43 @@
 import db from '@/lib/db';
-import { computeActuals } from '@/lib/import/computeActuals';
+import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
+
+type Params = { params: Promise<{ id: string }> };
 
 interface PatchBody {
-  categoryId?: string | null;
-  status?: 'active' | 'ignored';
+  status: 'approved' | 'ignored';
+  bucketId?: string | null;
 }
 
-export async function PATCH(request: Request, ctx: RouteContext<'/api/transactions/[id]'>) {
-  const { id } = await ctx.params;
+export async function PATCH(request: Request, { params }: Params) {
+  const { id } = await params;
   const body = (await request.json()) as PatchBody;
 
-  const updates: string[] = [];
-  const values: (string | null)[] = [];
+  const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id) as
+    | { description: string; status: string }
+    | undefined;
 
-  if ('categoryId' in body) {
-    updates.push('category_id = ?');
-    values.push(body.categoryId ?? null);
+  if (!tx) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  db.prepare('UPDATE transactions SET status = ?, bucket_id = ? WHERE id = ?').run(
+    body.status,
+    body.bucketId ?? null,
+    id,
+  );
+
+  // Upsert merchant memory whenever a transaction is approved with a bucket
+  if (body.status === 'approved' && body.bucketId) {
+    const key = normalizeMerchant(tx.description);
+    if (key) {
+      db.prepare(`
+        INSERT INTO merchant_memory (merchant_key, bucket_id, last_seen, count)
+        VALUES (?, ?, date('now'), 1)
+        ON CONFLICT(merchant_key) DO UPDATE SET
+          bucket_id = excluded.bucket_id,
+          last_seen = excluded.last_seen,
+          count = count + 1
+      `).run(key, body.bucketId);
+    }
   }
-  if ('status' in body) {
-    updates.push('status = ?');
-    values.push(body.status ?? 'active');
-  }
-
-  if (updates.length === 0) return Response.json({ ok: true });
-
-  db.prepare(`UPDATE transactions SET ${updates.join(', ')} WHERE id = ?`).run(...values, id);
-  computeActuals();
 
   return Response.json({ ok: true });
 }

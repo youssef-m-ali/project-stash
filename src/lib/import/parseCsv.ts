@@ -1,4 +1,4 @@
-import type { Account, CategoryRule, ParsedTransaction } from '@/lib/types';
+import type { Account, ParsedTransaction } from '@/lib/types';
 import { detectFormat } from './detectFormat';
 import { splitRows } from './parseUtils';
 import { parseCibcChequing } from './parseCibcChequing';
@@ -10,7 +10,6 @@ import { parseGeneric } from './parseGeneric';
 export function parseCsv(
   csvText: string,
   account: Account,
-  rules: CategoryRule[],
 ): { transactions: ParsedTransaction[]; format: string } {
   const rows = splitRows(csvText);
   if (rows.length === 0) return { transactions: [], format: 'empty' };
@@ -20,20 +19,19 @@ export function parseCsv(
   let transactions: ParsedTransaction[];
   switch (format) {
     case 'cibc-chequing':
-      transactions = parseCibcChequing(csvText, account, rules);
+      transactions = parseCibcChequing(csvText, account);
       break;
     case 'cibc-cc':
-      transactions = parseCibcCc(csvText, account, rules);
+      transactions = parseCibcCc(csvText, account);
       break;
     case 'scotiabank-chequing':
-      transactions = parseScotiabankChequing(csvText, account, rules);
+      transactions = parseScotiabankChequing(csvText, account);
       break;
     case 'scotiabank-cc':
-      transactions = parseScotiabankCc(csvText, account, rules);
+      transactions = parseScotiabankCc(csvText, account);
       break;
     default:
-      // generic: assume Date=0, Description=1, Amount=2
-      transactions = parseGeneric(csvText, account, rules, { dateCol: 0, descCol: 1, amountCol: 2 });
+      transactions = parseGeneric(csvText, account, { dateCol: 0, descCol: 1, amountCol: 2 });
   }
 
   return { transactions, format };

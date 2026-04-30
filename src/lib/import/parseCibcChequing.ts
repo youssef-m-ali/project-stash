@@ -1,10 +1,9 @@
-import type { Account, CategoryRule, ParsedTransaction } from '@/lib/types';
+import type { Account, ParsedTransaction } from '@/lib/types';
 import { splitRows, splitCols, normalizeDate, buildParsedTx } from './parseUtils';
 
 export function parseCibcChequing(
   csvText: string,
   account: Account,
-  rules: CategoryRule[],
 ): ParsedTransaction[] {
   const rows = splitRows(csvText);
   if (rows.length < 2) return [];
@@ -29,7 +28,6 @@ export function parseCibcChequing(
       cols[idx.desc] ?? '',
       rawAmount,
       account,
-      rules,
     ));
   }
   return results;

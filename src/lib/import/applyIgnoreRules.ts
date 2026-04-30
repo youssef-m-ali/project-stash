@@ -1,8 +1,8 @@
-import type { Account } from '@/lib/types';
+import type { Account, TransactionStatus } from '@/lib/types';
 
 interface IgnoreResult {
-  status: 'active' | 'ignored';
-  ignoreReason: string | null;
+  status: TransactionStatus;
+  ignoreReason: string | null; // internal only — not stored on ParsedTransaction
 }
 
 const INTERAC_RE = /interac|e-transfer|etransfer/i;
@@ -39,5 +39,5 @@ export function applyIgnoreRules(
     return { status: 'ignored', ignoreReason: 'payroll' };
   }
 
-  return { status: 'active', ignoreReason: null };
+  return { status: 'pending', ignoreReason: null };
 }

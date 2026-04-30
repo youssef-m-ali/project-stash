@@ -1,4 +1,4 @@
-import type { Account, CategoryRule, ParsedTransaction } from '@/lib/types';
+import type { Account, ParsedTransaction } from '@/lib/types';
 import { splitRows, splitCols, normalizeDate, buildParsedTx } from './parseUtils';
 
 // All rows from a pass-through account are auto-ignored by applyIgnoreRules.
@@ -6,7 +6,6 @@ import { splitRows, splitCols, normalizeDate, buildParsedTx } from './parseUtils
 export function parseScotiabankChequing(
   csvText: string,
   account: Account,
-  rules: CategoryRule[],
 ): ParsedTransaction[] {
   const rows = splitRows(csvText);
   if (rows.length < 2) return [];
@@ -34,7 +33,6 @@ export function parseScotiabankChequing(
       description,
       rawAmount,
       account,
-      rules,
     ));
   }
   return results;

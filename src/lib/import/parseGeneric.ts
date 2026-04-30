@@ -1,4 +1,4 @@
-import type { Account, CategoryRule, ParsedTransaction } from '@/lib/types';
+import type { Account, ParsedTransaction } from '@/lib/types';
 import { splitRows, splitCols, normalizeDate, buildParsedTx } from './parseUtils';
 
 // Fallback parser: expects at minimum Date, Description, Amount columns.
@@ -12,7 +12,6 @@ export interface GenericMapping {
 export function parseGeneric(
   csvText: string,
   account: Account,
-  rules: CategoryRule[],
   mapping: GenericMapping,
   skipHeaderRows = 1,
 ): ParsedTransaction[] {
@@ -29,7 +28,6 @@ export function parseGeneric(
       cols[mapping.descCol] ?? '',
       rawAmount,
       account,
-      rules,
     ));
   }
   return results;
