@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, nextFriday, getDay } from 'date-fns';
+import { format, nextFriday } from 'date-fns';
 import type { BudgetState } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -36,13 +36,11 @@ export function StepIncome({ draft, onNext }: Props) {
   });
 
   function onSubmit(values: FormOutput) {
-    const d = new Date(values.firstPaycheckDate + 'T12:00:00');
     onNext({
       income: {
         netPerPaycheck: values.netPerPaycheck,
         frequency: 'biweekly',
         firstPaycheckDate: values.firstPaycheckDate,
-        payDayOfWeek: getDay(d) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
       },
     });
   }

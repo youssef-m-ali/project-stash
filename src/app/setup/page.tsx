@@ -1,73 +1,50 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { BudgetState } from '@/lib/types';
-import { storageAdapter } from '@/lib/storage/sqliteAdapter';
 import { StepIncome } from '@/components/questionnaire/StepIncome';
-import { StepFixed } from '@/components/questionnaire/StepFixed';
-import { StepVariable } from '@/components/questionnaire/StepVariable';
-import { StepSubscriptions } from '@/components/questionnaire/StepSubscriptions';
-import { StepSavings } from '@/components/questionnaire/StepSavings';
+import { StepBuckets } from '@/components/questionnaire/StepBuckets';
 import { StepAccounts } from '@/components/questionnaire/StepAccounts';
-import { StepReview } from '@/components/questionnaire/StepReview';
-import { sampleBudgetState } from '@/lib/budget/sampleData';
 
-const STEP_LABELS = [
-  'Income',
-  'Fixed expenses',
-  'Variable expenses',
-  'Subscriptions',
-  'Savings goal',
-  'Accounts',
-  'Review',
-];
-
+const STEP_LABELS = ['Income', 'Buckets', 'Accounts'];
 const TOTAL_STEPS = STEP_LABELS.length;
 
 function buildInitialDraft(): Partial<BudgetState> {
-  return {
-    schemaVersion: 1,
-    currency: '$',
-    fixedExpenses: [],
-    variableExpenses: [],
-    subscriptions: [],
-    savingsGoal: { targetRate: 0.3, buckets: [] },
-    accounts: [],
-  };
+  return { schemaVersion: 4, currency: '$', accounts: [], buckets: [] };
 }
 
 export default function SetupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Partial<BudgetState>>(buildInitialDraft);
 
-  useEffect(() => {
-    if (searchParams.get('sample') === '1') {
-      const s = sampleBudgetState();
-      storageAdapter.saveState(s).then(() => router.replace('/dashboard'));
-    }
-  }, [searchParams, router]);
-
   function mergeDraft(slice: Partial<BudgetState>) {
-    setDraft((prev) => ({ ...prev, ...slice }));
+    setDraft(prev => ({ ...prev, ...slice }));
   }
 
   function handleNext(slice: Partial<BudgetState>) {
     mergeDraft(slice);
-    setStep((s) => s + 1);
+    setStep(s => s + 1);
   }
 
   function handleBack() {
-    setStep((s) => Math.max(0, s - 1));
+    setStep(s => Math.max(0, s - 1));
   }
 
-  function handleFinish(slice: Partial<BudgetState>) {
+  async function handleFinish(slice: Partial<BudgetState>) {
     const final = { ...draft, ...slice } as BudgetState;
-    final.createdAt = new Date().toISOString();
-    final.updatedAt = new Date().toISOString();
-    storageAdapter.saveState(final).then(() => router.push('/dashboard'));
+
+    await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(final),
+    });
+
+    // Periods are regenerated inside POST /api/config, but call regenerate to be safe
+    await fetch('/api/periods/regenerate', { method: 'POST' });
+
+    router.push('/dashboard');
   }
 
   const stepProps = { draft, onBack: handleBack };
@@ -75,6 +52,12 @@ export default function SetupPage() {
   return (
     <div className="min-h-screen flex flex-col items-center py-10 px-4">
       <div className="w-full max-w-2xl flex flex-col gap-8">
+        {/* Header */}
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-zinc-100">Stash Up</h1>
+          <p className="text-sm text-zinc-500">Set up your budget in 3 quick steps.</p>
+        </div>
+
         {/* Progress */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs text-zinc-500">
@@ -92,11 +75,7 @@ export default function SetupPage() {
               <div
                 key={label}
                 className={`flex-1 text-center text-[10px] font-medium truncate px-0.5 transition-colors ${
-                  i === step
-                    ? 'text-zinc-100'
-                    : i < step
-                    ? 'text-zinc-500'
-                    : 'text-zinc-600'
+                  i === step ? 'text-zinc-100' : i < step ? 'text-zinc-500' : 'text-zinc-600'
                 }`}
               >
                 {label}
@@ -108,13 +87,18 @@ export default function SetupPage() {
         {/* Step content */}
         <div className="bg-zinc-700 rounded-xl border border-zinc-600 p-6 md:p-8">
           {step === 0 && <StepIncome {...stepProps} onNext={handleNext} />}
-          {step === 1 && <StepFixed {...stepProps} onNext={handleNext} />}
-          {step === 2 && <StepVariable {...stepProps} onNext={handleNext} />}
-          {step === 3 && <StepSubscriptions {...stepProps} onNext={handleNext} />}
-          {step === 4 && <StepSavings {...stepProps} onNext={handleNext} />}
-          {step === 5 && <StepAccounts {...stepProps} onNext={handleNext} />}
-          {step === 6 && <StepReview {...stepProps} onFinish={handleFinish} />}
+          {step === 1 && <StepBuckets {...stepProps} onNext={handleNext} />}
+          {step === 2 && (
+            <StepAccounts
+              {...stepProps}
+              onNext={handleFinish}
+            />
+          )}
         </div>
+
+        <p className="text-center text-xs text-zinc-600">
+          100% local — your data never leaves your device.
+        </p>
       </div>
     </div>
   );
