@@ -24,8 +24,8 @@ export function ImportSummaryBanner({ inserted, skipped, months, onImportMore }:
         )}
       </div>
       <div className="flex gap-3">
-        <Link href="/dashboard/monthly">
-          <Button>View Monthly tab</Button>
+        <Link href="/review">
+          <Button>Review transactions</Button>
         </Link>
         <Button variant="secondary" onClick={onImportMore}>Import more</Button>
       </div>
