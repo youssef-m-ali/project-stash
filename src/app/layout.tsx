@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stash Up — Biweekly Budget Planner",
-  description: "Plan your 6-month budget. All data stays in your browser.",
+  title: "Stash Up — Per-Paycheck Spending Tracker",
+  description: "Upload CSVs, approve transactions into buckets, watch your paycheck period fill up. All data stays local.",
 };
 
 export default function RootLayout({
