@@ -54,7 +54,7 @@ function ReviewRow({
         >
           <option value="">— select bucket —</option>
           {buckets.map(b => (
-            <option key={b.id} value={b.id}>{b.name}</option>
+            <option key={b.id} value={b.id}>{b.emoji ? `${b.emoji} ${b.name}` : b.name}</option>
           ))}
         </Select>
       </div>

@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function BucketFillRow({ bucket }: Props) {
-  const { name, color, spent, planned, pct } = bucket;
+  const { name, color, emoji, spent, planned, pct } = bucket;
   const isOver = spent > planned;
   const isFull = planned > 0 && spent >= planned;
   const displayPct = Math.min(pct, 1);
@@ -16,10 +16,11 @@ export function BucketFillRow({ bucket }: Props) {
     <div className="flex flex-col gap-1.5 py-3 border-b border-zinc-700/60 last:border-0">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="w-3 h-3 rounded-full shrink-0"
-            style={{ backgroundColor: color }}
-          />
+          {emoji ? (
+            <span className="text-base leading-none shrink-0">{emoji}</span>
+          ) : (
+            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+          )}
           <span className="text-sm font-medium text-zinc-200 truncate">{name}</span>
         </div>
 

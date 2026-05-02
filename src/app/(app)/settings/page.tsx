@@ -24,7 +24,7 @@ function BucketsSection({ initialBuckets }: { initialBuckets: Bucket[] }) {
   function addBucket() {
     setBuckets(prev => [
       ...prev,
-      { id: uuid(), name: '', amountPerPaycheck: 0, color: '#6b7280', sortOrder: prev.length },
+      { id: uuid(), name: '', amountPerPaycheck: 0, color: '#6b7280', emoji: null, sortOrder: prev.length },
     ]);
   }
 
@@ -53,6 +53,15 @@ function BucketsSection({ initialBuckets }: { initialBuckets: Bucket[] }) {
 
       {buckets.map((b, i) => (
         <div key={b.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <input
+            type="text"
+            maxLength={2}
+            placeholder="🏷"
+            value={b.emoji ?? ''}
+            onChange={e => updateBucket(b.id, { emoji: e.target.value || null })}
+            className="w-10 text-center bg-zinc-700 border border-zinc-600 rounded-lg px-1 py-2 text-base focus:outline-none focus:border-zinc-400 shrink-0"
+            title="Emoji (optional)"
+          />
           <Input
             className="flex-1"
             placeholder="Bucket name"

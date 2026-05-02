@@ -20,12 +20,12 @@ const PRESET_COLORS = [
 ];
 
 const DEFAULT_BUCKETS: Omit<Bucket, 'sortOrder'>[] = [
-  { id: uuid(), name: 'Groceries',      amountPerPaycheck: 300, color: '#10b981' },
-  { id: uuid(), name: 'Dining Out',     amountPerPaycheck: 150, color: '#f59e0b' },
-  { id: uuid(), name: 'Gas',            amountPerPaycheck: 100, color: '#3b82f6' },
-  { id: uuid(), name: 'Entertainment',  amountPerPaycheck: 80,  color: '#8b5cf6' },
-  { id: uuid(), name: 'Utilities',      amountPerPaycheck: 200, color: '#6b7280' },
-  { id: uuid(), name: 'Savings',        amountPerPaycheck: 800, color: '#22c55e' },
+  { id: uuid(), name: 'Groceries',      amountPerPaycheck: 300, color: '#10b981', emoji: '🛒' },
+  { id: uuid(), name: 'Dining Out',     amountPerPaycheck: 150, color: '#f59e0b', emoji: '🍽️' },
+  { id: uuid(), name: 'Gas',            amountPerPaycheck: 100, color: '#3b82f6', emoji: '⛽' },
+  { id: uuid(), name: 'Entertainment',  amountPerPaycheck: 80,  color: '#8b5cf6', emoji: '🎬' },
+  { id: uuid(), name: 'Utilities',      amountPerPaycheck: 200, color: '#6b7280', emoji: '💡' },
+  { id: uuid(), name: 'Savings',        amountPerPaycheck: 800, color: '#22c55e', emoji: '💰' },
 ];
 
 const bucketSchema = z.object({
@@ -33,6 +33,7 @@ const bucketSchema = z.object({
   name: z.string().min(1, 'Required'),
   amountPerPaycheck: z.coerce.number().min(0, 'Must be 0 or more'),
   color: z.string().default('#6b7280'),
+  emoji: z.string().max(2).nullable().default(null),
 });
 
 const schema = z.object({
@@ -77,6 +78,7 @@ export function StepBuckets({ draft, onNext, onBack }: Props) {
       name: b.name,
       amountPerPaycheck: b.amountPerPaycheck,
       color: b.color,
+      emoji: b.emoji ?? null,
       sortOrder: i,
     }));
     onNext({ buckets });
@@ -94,7 +96,8 @@ export function StepBuckets({ draft, onNext, onBack }: Props) {
 
       <div className="flex flex-col gap-3">
         {fields.length > 0 && (
-          <div className="hidden md:grid grid-cols-[1fr_120px_140px_32px] gap-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">
+          <div className="hidden md:grid md:grid-cols-[40px_1fr_120px_140px_32px] gap-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">
+            <span>Icon</span>
             <span>Bucket name</span>
             <span>$/paycheck</span>
             <span>Color</span>
@@ -107,8 +110,18 @@ export function StepBuckets({ draft, onNext, onBack }: Props) {
           return (
             <div
               key={field.id}
-              className="flex flex-col md:grid md:grid-cols-[1fr_120px_140px_32px] gap-3 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50"
+              className="flex flex-col md:grid md:grid-cols-[40px_1fr_120px_140px_32px] gap-3 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50"
             >
+              <div>
+                <Label className="md:hidden mb-1">Icon</Label>
+                <input
+                  type="text"
+                  maxLength={2}
+                  placeholder="🏷"
+                  className="w-10 text-center bg-zinc-700 border border-zinc-600 rounded-lg px-1 py-2 text-base focus:outline-none focus:border-zinc-400"
+                  {...register(`buckets.${i}.emoji`)}
+                />
+              </div>
               <div>
                 <Label className="md:hidden mb-1">Name</Label>
                 <Input
@@ -169,7 +182,7 @@ export function StepBuckets({ draft, onNext, onBack }: Props) {
 
       <button
         type="button"
-        onClick={() => append({ id: uuid(), name: '', amountPerPaycheck: 0, color: '#6b7280' })}
+        onClick={() => append({ id: uuid(), name: '', amountPerPaycheck: 0, color: '#6b7280', emoji: null })}
         className="text-sm text-zinc-500 hover:text-zinc-100 transition-colors self-start"
       >
         + Add bucket
