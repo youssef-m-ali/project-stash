@@ -14,6 +14,7 @@ export type Bucket = {
   name: string;
   amountPerPaycheck: number; // planned spend per 2-week period
   color: string;             // hex, used for progress bar
+  emoji: string | null;      // optional emoji shown in place of color dot
   sortOrder: number;
 };
 
@@ -37,6 +38,22 @@ export type Transaction = {
   periodId: string | null;
   status: TransactionStatus;
   importedAt: string;
+};
+
+export type Subtransaction = {
+  id: string;
+  txId: string;
+  description: string;
+  amount: number;  // negative = credit back (reimbursement/split); positive = rare extra charge
+  date: string;    // YYYY-MM-DD
+  createdAt: string;
+};
+
+// Transaction as returned by the API — always includes its subtransactions.
+// netAmount = amount + SUM(subtransactions[].amount)
+export type TransactionWithSubs = Transaction & {
+  subtransactions: Subtransaction[];
+  netAmount: number;
 };
 
 export type MerchantMemory = {
@@ -81,6 +98,7 @@ export type BucketFill = {
   id: string;
   name: string;
   color: string;
+  emoji: string | null;
   sortOrder: number;
   planned: number;  // amountPerPaycheck
   spent: number;    // SUM of approved transactions in the current period

@@ -190,7 +190,31 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions (account_id);
   CREATE INDEX IF NOT EXISTS idx_tx_period  ON transactions (period_id);
   CREATE INDEX IF NOT EXISTS idx_tx_status  ON transactions (status);
+
+  -- Each subtransaction belongs to exactly one parent transaction.
+  -- amount follows the same sign convention as transactions:
+  --   negative = credit back to you (the common case: reimbursements, splits)
+  --   positive = rare additional charge against the same bucket
+  -- No nesting: subtransactions cannot have subtransactions.
+  CREATE TABLE IF NOT EXISTS subtransactions (
+    id          TEXT PRIMARY KEY,
+    tx_id       TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+    description TEXT NOT NULL,
+    amount      REAL NOT NULL,
+    date        TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_subtx_tx ON subtransactions (tx_id);
 `);
+
+// ── Additive column migrations (safe to run every boot) ──────────────────────
+
+(function addMissingColumns() {
+  const bucketCols = (db.prepare('PRAGMA table_info(buckets)').all() as { name: string }[]).map(r => r.name);
+  if (!bucketCols.includes('emoji')) {
+    db.prepare('ALTER TABLE buckets ADD COLUMN emoji TEXT').run();
+  }
+})();
 
 // ── Period generation ─────────────────────────────────────────────────────────
 
