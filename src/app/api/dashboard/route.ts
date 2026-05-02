@@ -3,7 +3,7 @@ import db from '@/lib/db';
 import type { DashboardData, BucketFill, PaycheckPeriod } from '@/lib/types';
 
 type PeriodRow = { id: string; start_date: string; end_date: string; paycheck_amount: number };
-type BucketRow = { id: string; name: string; amount_per_paycheck: number; color: string; sort_order: number };
+type BucketRow = { id: string; name: string; amount_per_paycheck: number; color: string; emoji: string | null; sort_order: number };
 type SpendRow  = { bucket_id: string | null; total: number };
 
 export function GET() {
@@ -30,12 +30,20 @@ export function GET() {
     .prepare('SELECT * FROM buckets ORDER BY sort_order, name')
     .all() as BucketRow[];
 
-  // Sum approved spending per bucket for the current period
+  // Net spend per bucket = transaction amounts + subtransaction credits.
+  // The CTE pre-aggregates subtransaction totals per parent so the join
+  // doesn't multiply transaction.amount by the number of subtransactions.
   const spendRows = db.prepare(`
-    SELECT bucket_id, SUM(amount) as total
-    FROM transactions
-    WHERE period_id = ? AND status = 'approved' AND amount > 0
-    GROUP BY bucket_id
+    WITH sub_totals AS (
+      SELECT s.tx_id, SUM(s.amount) AS sub_sum
+      FROM subtransactions s
+      GROUP BY s.tx_id
+    )
+    SELECT t.bucket_id, SUM(t.amount + COALESCE(st.sub_sum, 0)) AS total
+    FROM transactions t
+    LEFT JOIN sub_totals st ON st.tx_id = t.id
+    WHERE t.period_id = ? AND t.status = 'approved'
+    GROUP BY t.bucket_id
   `).all(periodRow.id) as SpendRow[];
 
   const spendMap = new Map<string, number>(
@@ -49,6 +57,7 @@ export function GET() {
       id: b.id,
       name: b.name,
       color: b.color,
+      emoji: b.emoji ?? null,
       sortOrder: b.sort_order,
       planned,
       spent,
