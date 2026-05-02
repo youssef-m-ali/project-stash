@@ -14,7 +14,7 @@ interface PreviewRequestBody {
 }
 
 type AccountRow = { id: string; label: string; kind: string; is_pass_through: number };
-type BucketRow = { id: string; name: string; amount_per_paycheck: number; color: string; sort_order: number };
+type BucketRow = { id: string; name: string; amount_per_paycheck: number; color: string; emoji: string | null; sort_order: number };
 type MemoryRow = { merchant_key: string; bucket_id: string };
 
 export async function POST(request: Request) {
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     name: r.name,
     amountPerPaycheck: r.amount_per_paycheck,
     color: r.color,
+    emoji: r.emoji ?? null,
     sortOrder: r.sort_order,
   }));
 

@@ -17,6 +17,7 @@ function rowToBucket(r: Record<string, unknown>): Bucket {
     name: r.name as string,
     amountPerPaycheck: r.amount_per_paycheck as number,
     color: r.color as string,
+    emoji: (r.emoji as string | null) ?? null,
     sortOrder: r.sort_order as number,
   };
 }
@@ -89,9 +90,9 @@ export async function POST(req: Request) {
     for (let i = 0; i < body.buckets.length; i++) {
       const b = body.buckets[i];
       db.prepare(`
-        INSERT INTO buckets (id, name, amount_per_paycheck, color, sort_order)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(b.id, b.name, b.amountPerPaycheck, b.color, i);
+        INSERT INTO buckets (id, name, amount_per_paycheck, color, emoji, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(b.id, b.name, b.amountPerPaycheck, b.color, b.emoji ?? null, i);
     }
   })();
 

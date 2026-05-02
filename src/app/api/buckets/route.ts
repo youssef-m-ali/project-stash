@@ -9,6 +9,7 @@ function rowToBucket(r: Record<string, unknown>): Bucket {
     name: r.name as string,
     amountPerPaycheck: r.amount_per_paycheck as number,
     color: r.color as string,
+    emoji: (r.emoji as string | null) ?? null,
     sortOrder: r.sort_order as number,
   };
 }
@@ -27,9 +28,9 @@ export async function POST(req: Request) {
     db.prepare('SELECT MAX(sort_order) as m FROM buckets').get() as { m: number | null }
   ).m ?? -1;
   db.prepare(`
-    INSERT INTO buckets (id, name, amount_per_paycheck, color, sort_order)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(id, body.name, body.amountPerPaycheck, body.color ?? '#6b7280', maxOrder + 1);
+    INSERT INTO buckets (id, name, amount_per_paycheck, color, emoji, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(id, body.name, body.amountPerPaycheck, body.color ?? '#6b7280', body.emoji ?? null, maxOrder + 1);
 
   const row = db.prepare('SELECT * FROM buckets WHERE id = ?').get(id) as Record<string, unknown>;
   return NextResponse.json({ bucket: rowToBucket(row) }, { status: 201 });
