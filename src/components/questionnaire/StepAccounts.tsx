@@ -15,7 +15,6 @@ const accountSchema = z.object({
   id: z.string(),
   label: z.string().min(1, 'Required'),
   kind: z.enum(['chequing', 'credit-card']),
-  isPassThrough: z.boolean(),
 });
 
 const schema = z.object({ accounts: z.array(accountSchema) });
@@ -47,9 +46,7 @@ export function StepAccounts({ draft, onNext, onBack }: Props) {
       <div>
         <h2 className="text-xl font-semibold text-zinc-100">Bank accounts</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Add each account you want to track. Mark pass-through accounts (e.g. an account
-          you only use to receive transfers or pay off credit cards) — their transactions
-          will be auto-ignored during import.
+          Add each account you want to track.
         </p>
       </div>
 
@@ -59,10 +56,9 @@ export function StepAccounts({ draft, onNext, onBack }: Props) {
 
       <div className="flex flex-col gap-4">
         {fields.length > 0 && (
-          <div className="hidden md:grid grid-cols-[1fr_130px_auto_32px] gap-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">
+          <div className="hidden md:grid grid-cols-[1fr_130px_32px] gap-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">
             <span>Label</span>
             <span>Type</span>
-            <span>Pass-through?</span>
             <span />
           </div>
         )}
@@ -72,7 +68,7 @@ export function StepAccounts({ draft, onNext, onBack }: Props) {
           return (
             <div
               key={field.id}
-              className="flex flex-col md:grid md:grid-cols-[1fr_130px_auto_32px] gap-3 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50"
+              className="flex flex-col md:grid md:grid-cols-[1fr_130px_32px] gap-3 items-start md:items-center p-3 md:p-0 rounded-lg md:rounded-none border md:border-0 border-zinc-600/50"
             >
               <div>
                 <Label className="md:hidden mb-1">Label</Label>
@@ -92,15 +88,6 @@ export function StepAccounts({ draft, onNext, onBack }: Props) {
                 </Select>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  className="rounded accent-zinc-400"
-                  {...register(`accounts.${i}.isPassThrough`)}
-                />
-                <span className="text-sm text-zinc-400">Pass-through</span>
-              </label>
-
               <button
                 type="button"
                 onClick={() => remove(i)}
@@ -116,7 +103,7 @@ export function StepAccounts({ draft, onNext, onBack }: Props) {
 
       <button
         type="button"
-        onClick={() => append({ id: uuid(), label: '', kind: 'chequing', isPassThrough: false })}
+        onClick={() => append({ id: uuid(), label: '', kind: 'chequing' })}
         className="text-sm text-zinc-500 hover:text-zinc-100 transition-colors self-start"
       >
         + Add account

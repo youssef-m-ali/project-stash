@@ -17,7 +17,7 @@ export function AccountSelector({ accounts, value, onChange }: Props) {
       <option value="">— select account —</option>
       {accounts.map((a) => (
         <option key={a.id} value={a.id}>
-          {a.label} ({a.kind === 'chequing' ? 'Chequing' : 'Credit card'}{a.isPassThrough ? ', pass-through' : ''})
+          {a.label} ({a.kind === 'chequing' ? 'Chequing' : 'Credit card'})
         </option>
       ))}
     </Select>
