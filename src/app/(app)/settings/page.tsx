@@ -389,6 +389,8 @@ function MerchantMemorySection() {
   const [exemptions, setExemptions] = useState<{ merchantKey: string }[]>([]);
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [remapModal, setRemapModal] = useState<{ merchantKey: string; newBucketId: string } | null>(null);
+  const [remapping, setRemapping] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -404,11 +406,6 @@ function MerchantMemorySection() {
 
   const exemptKeys = new Set(exemptions.map(e => e.merchantKey));
   const activeEntries = entries.filter(e => !exemptKeys.has(e.merchantKey));
-
-  function bucketName(id: string) {
-    const b = buckets.find(b => b.id === id);
-    return b ? (b.emoji ? `${b.emoji} ${b.name}` : b.name) : id;
-  }
 
   async function forget(key: string) {
     await fetch(`/api/merchant-memory/${encodeURIComponent(key)}`, { method: 'DELETE' });
@@ -429,6 +426,21 @@ function MerchantMemorySection() {
     setExemptions(prev => prev.filter(e => e.merchantKey !== key));
   }
 
+  async function applyRemap(updateHistorical: boolean) {
+    if (!remapModal) return;
+    setRemapping(true);
+    await fetch(`/api/merchant-memory/${encodeURIComponent(remapModal.merchantKey)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucketId: remapModal.newBucketId, updateHistorical }),
+    });
+    setEntries(prev => prev.map(e =>
+      e.merchantKey === remapModal.merchantKey ? { ...e, bucketId: remapModal.newBucketId } : e,
+    ));
+    setRemapping(false);
+    setRemapModal(null);
+  }
+
   if (loading) return null;
 
   return (
@@ -445,7 +457,47 @@ function MerchantMemorySection() {
               <div key={e.merchantKey} className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-700/50 last:border-0">
                 <span className="font-mono text-sm text-zinc-300 flex-1">{e.merchantKey}</span>
                 <span className="text-sm text-zinc-500">→</span>
-                <span className="text-sm text-zinc-400">{bucketName(e.bucketId)}</span>
+                <div className="relative">
+                  <select
+                    value={e.bucketId}
+                    onChange={ev => setRemapModal({ merchantKey: e.merchantKey, newBucketId: ev.target.value })}
+                    className="text-xs bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-zinc-300 focus:outline-none focus:border-zinc-400"
+                  >
+                    {buckets.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.emoji ? `${b.emoji} ${b.name}` : b.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {remapModal?.merchantKey === e.merchantKey && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => !remapping && setRemapModal(null)} />
+                      <div className="absolute top-full left-0 mt-2 z-50 w-56 bg-zinc-900 border border-zinc-700/60 rounded-2xl shadow-lg shadow-black/30 p-3 flex flex-col gap-2.5">
+                        <div className="absolute -top-1.5 left-4 w-3 h-3 bg-zinc-900 border-l border-t border-zinc-700/60 rotate-45" />
+                        <p className="text-xs text-zinc-400 leading-snug">Apply this change to future transactions, or historical ones too?</p>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            disabled={remapping}
+                            onClick={() => applyRemap(false)}
+                            className="flex-1 text-xs py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+                          >
+                            Future only
+                          </button>
+                          <button
+                            type="button"
+                            disabled={remapping}
+                            onClick={() => applyRemap(true)}
+                            className="flex-1 text-xs py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+                          >
+                            Future + history
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
                 <span className="text-xs text-zinc-600 tabular-nums w-10 text-right">{e.count}×</span>
                 <button
                   type="button"
@@ -468,6 +520,7 @@ function MerchantMemorySection() {
           </div>
         )}
       </div>
+
 
       <div className="flex flex-col gap-2">
         <h3 className="text-sm font-medium text-zinc-400">Exemptions</h3>

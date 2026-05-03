@@ -115,24 +115,62 @@ function DraggableCard({
 function SuggestedCard({
   tx,
   onConfirm,
-  onDeny,
+  onDenyOnce,
+  onDenyAndExempt,
   busy,
 }: {
   tx: ReviewTransaction;
   onConfirm: () => void;
-  onDeny: () => void;
+  onDenyOnce: () => void;
+  onDenyAndExempt: () => void;
   busy: boolean;
 }) {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
   return (
     <div className="rounded-lg bg-zinc-800 border border-amber-400/40 p-3">
       <TxCardContent tx={tx} />
-      <div className="mt-2 pt-2 border-t border-zinc-700/50 flex gap-2 justify-end">
-        <Button size="sm" variant="ghost" disabled={busy} onClick={onDeny} className="text-xs h-6 px-2">
-          Deny
-        </Button>
-        <Button size="sm" disabled={busy} onClick={onConfirm} className="text-xs h-6 px-2 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30">
-          Confirm
-        </Button>
+      <div className="mt-2 pt-2 border-t border-zinc-700/50 relative">
+        <div className="flex gap-2 justify-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => setPopoverOpen(v => !v)}
+            className="text-xs h-6 px-2"
+          >
+            Deny
+          </Button>
+          <Button size="sm" disabled={busy} onClick={onConfirm} className="text-xs h-6 px-2 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30">
+            Confirm
+          </Button>
+        </div>
+
+        {popoverOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setPopoverOpen(false)} />
+            <div className="absolute top-full right-0 mt-2 z-50 w-52 bg-zinc-900 border border-zinc-700/60 rounded-2xl shadow-lg shadow-black/30 p-3 flex flex-col gap-2.5">
+              <div className="absolute -top-1.5 right-10 w-3 h-3 bg-zinc-900 border-l border-t border-zinc-700/60 rotate-45" />
+              <p className="text-xs text-zinc-400 leading-snug">Keep auto-classifying this merchant going forward?</p>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { onDenyOnce(); setPopoverOpen(false); }}
+                  className="flex-1 text-xs py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                >
+                  Just this once
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { onDenyAndExempt(); setPopoverOpen(false); }}
+                  className="flex-1 text-xs py-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-amber-400 transition-colors"
+                >
+                  Exempt
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -190,12 +228,14 @@ function BucketColumn({
   bucket,
   transactions,
   onConfirm,
-  onDeny,
+  onDenyOnce,
+  onDenyAndExempt,
 }: {
   bucket: Bucket;
   transactions: ReviewTransaction[];
   onConfirm: (txId: string, bucketId: string) => Promise<void>;
-  onDeny: (id: string) => void;
+  onDenyOnce: (id: string) => void;
+  onDenyAndExempt: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: bucket.id });
   const [busyIds, setBusyIds] = useState(new Set<string>());
@@ -230,7 +270,8 @@ function BucketColumn({
             key={tx.id}
             tx={tx}
             onConfirm={() => handleConfirm(tx.id)}
-            onDeny={() => onDeny(tx.id)}
+            onDenyOnce={() => onDenyOnce(tx.id)}
+            onDenyAndExempt={() => onDenyAndExempt(tx.id)}
             busy={busyIds.has(tx.id)}
           />
         ))}
@@ -251,7 +292,6 @@ export default function ReviewPage() {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [denyModal, setDenyModal] = useState<{ txId: string; merchantKey: string } | null>(null);
 
   const load = useCallback(async () => {
     const [txRes, bucketRes] = await Promise.all([
@@ -324,40 +364,29 @@ export default function ReviewPage() {
     );
   }
 
-  function handleDeny(id: string) {
+  function handleDenyOnce(id: string) {
+    setTransactions(prev => prev.map(t =>
+      t.id === id ? { ...t, suggestedBucketId: null } : t,
+    ));
+  }
+
+  async function handleDenyAndExempt(id: string) {
     const tx = transactions.find(t => t.id === id);
     const key = tx ? normalizeMerchant(tx.description) : '';
-    if (!key) {
-      setTransactions(prev => prev.map(t => t.id === id ? { ...t, suggestedBucketId: null } : t));
-      return;
+    if (key) {
+      await fetch('/api/merchant-exemptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantKey: key }),
+      });
+      setTransactions(prev => prev.map(t =>
+        normalizeMerchant(t.description) === key ? { ...t, suggestedBucketId: null } : t,
+      ));
+    } else {
+      setTransactions(prev => prev.map(t =>
+        t.id === id ? { ...t, suggestedBucketId: null } : t,
+      ));
     }
-    setDenyModal({ txId: id, merchantKey: key });
-  }
-
-  function closeDenyModal() {
-    setDenyModal(null);
-  }
-
-  function handleDenyOnce() {
-    if (!denyModal) return;
-    setTransactions(prev => prev.map(t =>
-      t.id === denyModal.txId ? { ...t, suggestedBucketId: null } : t,
-    ));
-    setDenyModal(null);
-  }
-
-  async function handleDenyAndExempt() {
-    if (!denyModal) return;
-    await fetch('/api/merchant-exemptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ merchantKey: denyModal.merchantKey }),
-    });
-    const key = denyModal.merchantKey;
-    setTransactions(prev => prev.map(t =>
-      normalizeMerchant(t.description) === key ? { ...t, suggestedBucketId: null } : t,
-    ));
-    setDenyModal(null);
   }
 
   function handleEdit(id: string, description: string, amount: number) {
@@ -430,7 +459,8 @@ export default function ReviewPage() {
                   bucket={bucket}
                   transactions={suggestedByBucket.get(bucket.id) ?? []}
                   onConfirm={handleApprove}
-                  onDeny={handleDeny}
+                  onDenyOnce={handleDenyOnce}
+                  onDenyAndExempt={handleDenyAndExempt}
                 />
               ))}
             </div>
@@ -446,50 +476,6 @@ export default function ReviewPage() {
         </DndContext>
       )}
 
-      {denyModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeDenyModal}>
-          <div
-            className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 max-w-sm w-full flex flex-col gap-5 shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div>
-              <h2 className="text-base font-semibold text-zinc-100">Deny suggestion</h2>
-              <p className="text-sm text-zinc-400 mt-1">
-                How should we handle{' '}
-                <span className="text-zinc-200 font-medium">"{denyModal.merchantKey}"</span> going forward?
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleDenyOnce}
-                className="flex flex-col gap-0.5 text-left rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700/60 px-4 py-3 transition-colors"
-              >
-                <span className="text-sm font-medium text-zinc-100">Just this once</span>
-                <span className="text-xs text-zinc-500">Move back to backlog to classify differently. Auto-classify future transactions from this merchant.</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDenyAndExempt}
-                className="flex flex-col gap-0.5 text-left rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700/60 px-4 py-3 transition-colors"
-              >
-                <span className="text-sm font-medium text-zinc-100">Exempt this merchant</span>
-                <span className="text-xs text-zinc-500">Never auto-classify "{denyModal.merchantKey}" again. Always send to backlog.</span>
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={closeDenyModal}
-              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors self-center"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
