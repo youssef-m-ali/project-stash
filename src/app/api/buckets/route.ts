@@ -11,6 +11,7 @@ function rowToBucket(r: Record<string, unknown>): Bucket {
     color: r.color as string,
     emoji: (r.emoji as string | null) ?? null,
     sortOrder: r.sort_order as number,
+    isSpecial: Boolean(r.is_special),
   };
 }
 

@@ -46,6 +46,12 @@ export function GET(req: Request) {
     ),
   );
 
+  const exemptKeys = new Set<string>(
+    (db.prepare('SELECT merchant_key FROM merchant_exemptions').all() as { merchant_key: string }[]).map(
+      r => r.merchant_key,
+    ),
+  );
+
   const transactions: ReviewTransaction[] = rows.map(r => {
     const key = normalizeMerchant(r.description);
     return {
@@ -59,7 +65,7 @@ export function GET(req: Request) {
       periodId: r.period_id,
       status: r.status as ReviewTransaction['status'],
       importedAt: r.imported_at,
-      suggestedBucketId: memoryMap.get(key) ?? null,
+      suggestedBucketId: exemptKeys.has(key) ? null : (memoryMap.get(key) ?? null),
     };
   });
 

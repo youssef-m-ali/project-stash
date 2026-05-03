@@ -33,7 +33,7 @@ const bucketSchema = z.object({
   name: z.string().min(1, 'Required'),
   amountPerPaycheck: z.coerce.number().min(0, 'Must be 0 or more'),
   color: z.string().default('#6b7280'),
-  emoji: z.string().max(2).nullable().default(null),
+  emoji: z.string().nullable().default(null),
 });
 
 const schema = z.object({
@@ -116,7 +116,7 @@ export function StepBuckets({ draft, onNext, onBack }: Props) {
                 <Label className="md:hidden mb-1">Icon</Label>
                 <input
                   type="text"
-                  maxLength={2}
+                  maxLength={8}
                   placeholder="🏷"
                   className="w-10 text-center bg-zinc-700 border border-zinc-600 rounded-lg px-1 py-2 text-base focus:outline-none focus:border-zinc-400"
                   {...register(`buckets.${i}.emoji`)}

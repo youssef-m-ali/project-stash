@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BudgetState } from '@/lib/types';
 import { StepIncome } from '@/components/questionnaire/StepIncome';
+import { StepFixedExpenses } from '@/components/questionnaire/StepFixedExpenses';
 import { StepBuckets } from '@/components/questionnaire/StepBuckets';
 import { StepAccounts } from '@/components/questionnaire/StepAccounts';
 
-const STEP_LABELS = ['Income', 'Buckets', 'Accounts'];
+const STEP_LABELS = ['Income', 'Fixed expenses', 'Buckets', 'Accounts'];
 const TOTAL_STEPS = STEP_LABELS.length;
 
 function buildInitialDraft(): Partial<BudgetState> {
-  return { schemaVersion: 4, currency: '$', accounts: [], buckets: [] };
+  return { schemaVersion: 4, currency: '$', accounts: [], buckets: [], fixedExpenses: [] };
 }
 
 export default function SetupPage() {
@@ -41,7 +42,6 @@ export default function SetupPage() {
       body: JSON.stringify(final),
     });
 
-    // Periods are regenerated inside POST /api/config, but call regenerate to be safe
     await fetch('/api/periods/regenerate', { method: 'POST' });
 
     router.push('/dashboard');
@@ -55,7 +55,7 @@ export default function SetupPage() {
         {/* Header */}
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-zinc-100">Stash Up</h1>
-          <p className="text-sm text-zinc-500">Set up your budget in 3 quick steps.</p>
+          <p className="text-sm text-zinc-500">Set up your budget in {TOTAL_STEPS} quick steps.</p>
         </div>
 
         {/* Progress */}
@@ -86,14 +86,10 @@ export default function SetupPage() {
 
         {/* Step content */}
         <div className="bg-zinc-700 rounded-xl border border-zinc-600 p-6 md:p-8">
-          {step === 0 && <StepIncome {...stepProps} onNext={handleNext} />}
-          {step === 1 && <StepBuckets {...stepProps} onNext={handleNext} />}
-          {step === 2 && (
-            <StepAccounts
-              {...stepProps}
-              onNext={handleFinish}
-            />
-          )}
+          {step === 0 && <StepIncome      {...stepProps} onNext={handleNext} />}
+          {step === 1 && <StepFixedExpenses {...stepProps} onNext={handleNext} />}
+          {step === 2 && <StepBuckets     {...stepProps} onNext={handleNext} />}
+          {step === 3 && <StepAccounts    {...stepProps} onNext={handleFinish} />}
         </div>
 
         <p className="text-center text-xs text-zinc-600">
