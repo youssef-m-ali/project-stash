@@ -42,6 +42,8 @@ function rowToSub(r: SubRow): Subtransaction {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const periodId  = searchParams.get('periodId');
+  const startDate = searchParams.get('startDate');
+  const endDate   = searchParams.get('endDate');
   const status    = searchParams.get('status');
   const bucketId  = searchParams.get('bucketId');
   const accountId = searchParams.get('accountId');
@@ -49,7 +51,18 @@ export async function GET(request: Request) {
   let sql = 'SELECT * FROM transactions WHERE 1=1';
   const params: (string | null)[] = [];
 
-  if (periodId)  { sql += ' AND period_id = ?';  params.push(periodId); }
+  if (periodId && startDate && endDate) {
+    // Match period-linked txs OR NULL-period txs in the date range (mirrors dashboard logic)
+    sql += ' AND (period_id = ? OR (period_id IS NULL AND date BETWEEN ? AND ?))';
+    params.push(periodId, startDate, endDate);
+  } else if (periodId) {
+    sql += ' AND period_id = ?';
+    params.push(periodId);
+  } else if (startDate && endDate) {
+    sql += ' AND date BETWEEN ? AND ?';
+    params.push(startDate, endDate);
+  }
+
   if (status)    { sql += ' AND status = ?';      params.push(status); }
   if (bucketId)  { sql += ' AND bucket_id = ?';   params.push(bucketId); }
   if (accountId) { sql += ' AND account_id = ?';  params.push(accountId); }

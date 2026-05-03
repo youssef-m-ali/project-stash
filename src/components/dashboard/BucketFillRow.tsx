@@ -4,16 +4,21 @@ import type { BucketFill } from '@/lib/types';
 
 interface Props {
   bucket: BucketFill;
+  onClick?: () => void;
+  selected?: boolean;
 }
 
-export function BucketFillRow({ bucket }: Props) {
+export function BucketFillRow({ bucket, onClick, selected }: Props) {
   const { name, color, emoji, spent, planned, pct } = bucket;
   const isOver = spent > planned;
   const isFull = planned > 0 && spent >= planned;
   const displayPct = Math.min(pct, 1);
 
   return (
-    <div className="flex flex-col gap-1.5 py-3 border-b border-zinc-700/60 last:border-0">
+    <div
+      className={`flex flex-col gap-1.5 py-3 border-b border-zinc-700/60 last:border-0 -mx-4 px-4 rounded-lg transition-colors ${onClick ? 'cursor-pointer' : ''} ${selected ? 'bg-zinc-700/40' : onClick ? 'hover:bg-zinc-700/20' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0">
           {emoji ? (
