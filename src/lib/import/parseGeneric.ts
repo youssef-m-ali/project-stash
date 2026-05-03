@@ -7,6 +7,7 @@ export interface GenericMapping {
   dateCol: number;
   descCol: number;
   amountCol: number;
+  flipSign?: boolean;
 }
 
 export function parseGeneric(
@@ -28,6 +29,7 @@ export function parseGeneric(
       cols[mapping.descCol] ?? '',
       rawAmount,
       account,
+      mapping.flipSign,
     ));
   }
   return results;

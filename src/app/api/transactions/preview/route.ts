@@ -1,5 +1,5 @@
 import db from '@/lib/db';
-import type { Account, Bucket } from '@/lib/types';
+import type { Account, Bucket, CsvMapping } from '@/lib/types';
 import { parseCsv } from '@/lib/import/parseCsv';
 import { hashTransaction } from '@/lib/import/hashTransaction';
 import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
@@ -7,13 +7,14 @@ import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
 interface FileInput {
   accountId: string;
   csvText: string;
+  mapping?: CsvMapping | null;
 }
 
 interface PreviewRequestBody {
   files: FileInput[];
 }
 
-type AccountRow = { id: string; label: string; kind: string; is_pass_through: number };
+type AccountRow = { id: string; label: string; kind: string };
 type BucketRow = { id: string; name: string; amount_per_paycheck: number; color: string; emoji: string | null; sort_order: number };
 type MemoryRow = { merchant_key: string; bucket_id: string };
 
@@ -21,12 +22,11 @@ export async function POST(request: Request) {
   const { files } = (await request.json()) as PreviewRequestBody;
 
   const accounts: Account[] = (
-    db.prepare('SELECT id, label, kind, is_pass_through FROM accounts').all() as AccountRow[]
+    db.prepare('SELECT id, label, kind FROM accounts').all() as AccountRow[]
   ).map((r) => ({
     id: r.id,
     label: r.label,
     kind: r.kind as Account['kind'],
-    isPassThrough: Boolean(r.is_pass_through),
   }));
 
   const buckets: Bucket[] = (
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const account = accounts.find((a) => a.id === file.accountId);
     if (!account) continue;
 
-    const { transactions, format } = parseCsv(file.csvText, account);
+    const transactions = parseCsv(file.csvText, account, file.mapping);
 
     for (const tx of transactions) {
       const id = hashTransaction(tx.date, tx.description, tx.rawAmount, tx.accountId);
@@ -66,7 +66,6 @@ export async function POST(request: Request) {
         id,
         duplicate: existingIds.has(id),
         suggestedBucketId,
-        detectedFormat: format,
       });
     }
   }

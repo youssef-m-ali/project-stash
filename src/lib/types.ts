@@ -6,7 +6,15 @@ export type Account = {
   id: string;
   label: string;
   kind: AccountKind;
-  isPassThrough: boolean; // credit card paid from chequing — skip double-count
+};
+
+export type FixedExpense = {
+  id: string;
+  name: string;
+  amount: number;
+  dueDayOfMonth: number;  // 1–31
+  emoji: string | null;
+  sortOrder: number;
 };
 
 export type Bucket = {
@@ -16,6 +24,7 @@ export type Bucket = {
   color: string;             // hex, used for progress bar
   emoji: string | null;      // optional emoji shown in place of color dot
   sortOrder: number;
+  isSpecial?: boolean;       // true for the system Fixed Expenses bucket
 };
 
 export type PaycheckPeriod = {
@@ -71,13 +80,6 @@ export type ParsedTransaction = Omit<Transaction, 'id' | 'importedAt'> & {
   suggestedBucketId: string | null; // from merchant_memory at preview time
 };
 
-export type BankFormat =
-  | 'cibc-chequing'
-  | 'cibc-cc'
-  | 'scotiabank-chequing'
-  | 'scotiabank-cc'
-  | 'generic';
-
 // ── Master state (persisted to SQLite) ───────────────────────────────────────
 
 export type BudgetState = {
@@ -88,8 +90,16 @@ export type BudgetState = {
     firstPaycheckDate: string; // ISO date; used to compute all period boundaries
     frequency: 'biweekly';
   };
+  fixedExpenses: FixedExpense[];
   accounts: Account[];
   buckets: Bucket[];
+};
+
+export type CsvMapping = {
+  dateCol: number | null;
+  descCol: number | null;
+  amountCol: number | null;
+  flipSign: boolean;
 };
 
 // ── API response shapes ───────────────────────────────────────────────────────
@@ -111,6 +121,9 @@ export type DashboardData = {
   pendingCount: number;
   totalSpent: number;
   totalPlanned: number;
+  prevPeriodStart: string;
+  nextPeriodStart: string;
+  currentPeriodStart: string;
 };
 
 export type ReviewTransaction = Transaction & {

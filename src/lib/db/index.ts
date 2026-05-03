@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { addDays, format } from 'date-fns';
 
+export const FIXED_EXPENSES_BUCKET_ID = '__fixed_expenses__';
+
 const DB_PATH = path.join(process.cwd(), 'data', 'budget.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
@@ -29,10 +31,9 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS accounts (
-    id              TEXT    PRIMARY KEY,
-    label           TEXT    NOT NULL,
-    kind            TEXT    NOT NULL DEFAULT 'chequing',
-    is_pass_through INTEGER NOT NULL DEFAULT 0
+    id    TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
+    kind  TEXT NOT NULL DEFAULT 'chequing'
   );
 
   CREATE TABLE IF NOT EXISTS buckets (
@@ -214,7 +215,46 @@ db.exec(`
   if (!bucketCols.includes('emoji')) {
     db.prepare('ALTER TABLE buckets ADD COLUMN emoji TEXT').run();
   }
+  if (!bucketCols.includes('is_special')) {
+    db.prepare('ALTER TABLE buckets ADD COLUMN is_special INTEGER NOT NULL DEFAULT 0').run();
+  }
 })();
+
+function ensureFixedExpensesBucket() {
+  db.prepare(`
+    INSERT OR IGNORE INTO buckets (id, name, amount_per_paycheck, color, emoji, sort_order, is_special)
+    VALUES (?, 'Fixed Expenses', 0, '#6b7280', '🔒', -1, 1)
+  `).run(FIXED_EXPENSES_BUCKET_ID);
+}
+ensureFixedExpensesBucket();
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS account_csv_mappings (
+    account_id  TEXT    PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+    date_col    INTEGER NOT NULL,
+    desc_col    INTEGER NOT NULL,
+    amount_col  INTEGER NOT NULL,
+    flip_sign   INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS merchant_exemptions (
+    merchant_key TEXT PRIMARY KEY,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS fixed_expenses (
+    id               TEXT    PRIMARY KEY,
+    name             TEXT    NOT NULL,
+    amount           REAL    NOT NULL,
+    due_day_of_month INTEGER NOT NULL CHECK (due_day_of_month BETWEEN 1 AND 31),
+    emoji            TEXT,
+    sort_order       INTEGER NOT NULL DEFAULT 0
+  );
+`);
 
 // ── Period generation ─────────────────────────────────────────────────────────
 

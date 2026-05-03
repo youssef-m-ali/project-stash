@@ -1,9 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { Account } from '@/lib/types';
 import { AccountSelector } from './AccountSelector';
-import { Button } from '@/components/ui/Button';
 
 export interface FileEntry {
   file: File;
@@ -12,12 +11,11 @@ export interface FileEntry {
 
 interface Props {
   accounts: Account[];
-  onPreview: (entries: FileEntry[]) => void;
-  loading: boolean;
+  entries: FileEntry[];
+  onEntriesChange: (entries: FileEntry[]) => void;
 }
 
-export function FileDropZone({ accounts, onPreview, loading }: Props) {
-  const [entries, setEntries] = useState<FileEntry[]>([]);
+export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function addFiles(files: FileList | null) {
@@ -25,29 +23,23 @@ export function FileDropZone({ accounts, onPreview, loading }: Props) {
     const newEntries: FileEntry[] = Array.from(files)
       .filter((f) => f.name.endsWith('.csv'))
       .map((f) => ({ file: f, accountId: '' }));
-    setEntries((prev) => {
-      const existing = new Set(prev.map((e) => e.file.name));
-      return [...prev, ...newEntries.filter((e) => !existing.has(e.file.name))];
-    });
+    const existing = new Set(entries.map((e) => e.file.name));
+    onEntriesChange([...entries, ...newEntries.filter((e) => !existing.has(e.file.name))]);
   }
 
   function setAccount(index: number, accountId: string) {
-    setEntries((prev) => prev.map((e, i) => i === index ? { ...e, accountId } : e));
+    onEntriesChange(entries.map((e, i) => i === index ? { ...e, accountId } : e));
   }
 
   function remove(index: number) {
-    setEntries((prev) => prev.filter((_, i) => i !== index));
+    onEntriesChange(entries.filter((_, i) => i !== index));
   }
 
-  const allAssigned = entries.length > 0 && entries.every((e) => e.accountId !== '');
-  const accountsUsed = new Set(entries.map((e) => e.accountId).filter(Boolean));
-  const hasDuplicateAccount = accountsUsed.size < entries.filter((e) => e.accountId).length;
-
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full">
       {/* Drop zone */}
       <div
-        className="border-2 border-dashed border-zinc-600 rounded-xl p-8 text-center cursor-pointer hover:border-zinc-400 transition-colors"
+        className="flex-1 border-2 border-dashed border-zinc-600 rounded-xl p-8 text-center cursor-pointer hover:border-zinc-400 transition-colors flex flex-col items-center justify-center"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
@@ -92,23 +84,6 @@ export function FileDropZone({ accounts, onPreview, loading }: Props) {
         </div>
       )}
 
-      {hasDuplicateAccount && (
-        <p className="text-sm text-amber-400">Two files are assigned to the same account.</p>
-      )}
-
-      {accounts.length === 0 && (
-        <p className="text-sm text-amber-400">
-          No accounts configured. Go to Settings → Edit questionnaire → Accounts to add your accounts first.
-        </p>
-      )}
-
-      <Button
-        disabled={!allAssigned || hasDuplicateAccount || loading}
-        onClick={() => onPreview(entries)}
-        className="self-start"
-      >
-        {loading ? 'Parsing…' : 'Preview transactions'}
-      </Button>
     </div>
   );
 }

@@ -1,38 +1,35 @@
-import type { Account, ParsedTransaction } from '@/lib/types';
-import { detectFormat } from './detectFormat';
-import { splitRows } from './parseUtils';
-import { parseCibcChequing } from './parseCibcChequing';
-import { parseCibcCc } from './parseCibcCc';
-import { parseScotiabankChequing } from './parseScotiabankChequing';
-import { parseScotiabankCc } from './parseScotiabankCc';
-import { parseGeneric } from './parseGeneric';
+import type { Account, ParsedTransaction, CsvMapping } from '@/lib/types';
+import { splitRows, splitCols } from './parseUtils';
+import { parseGeneric, type GenericMapping } from './parseGeneric';
 
 export function parseCsv(
   csvText: string,
   account: Account,
-): { transactions: ParsedTransaction[]; format: string } {
+  savedMapping?: CsvMapping | null,
+): ParsedTransaction[] {
   const rows = splitRows(csvText);
-  if (rows.length === 0) return { transactions: [], format: 'empty' };
+  if (rows.length < 2) return [];
 
-  const format = detectFormat(rows[0]);
+  let mapping: GenericMapping;
 
-  let transactions: ParsedTransaction[];
-  switch (format) {
-    case 'cibc-chequing':
-      transactions = parseCibcChequing(csvText, account);
-      break;
-    case 'cibc-cc':
-      transactions = parseCibcCc(csvText, account);
-      break;
-    case 'scotiabank-chequing':
-      transactions = parseScotiabankChequing(csvText, account);
-      break;
-    case 'scotiabank-cc':
-      transactions = parseScotiabankCc(csvText, account);
-      break;
-    default:
-      transactions = parseGeneric(csvText, account, { dateCol: 0, descCol: 1, amountCol: 2 });
+  if (savedMapping?.dateCol != null && savedMapping.descCol != null && savedMapping.amountCol != null) {
+    mapping = {
+      dateCol:   savedMapping.dateCol,
+      descCol:   savedMapping.descCol,
+      amountCol: savedMapping.amountCol,
+      flipSign:  savedMapping.flipSign,
+    };
+  } else {
+    const header = splitCols(rows[0]).map((h) => h.toLowerCase().trim());
+    const dateCol   = header.findIndex((h) => h.includes('date'));
+    const descCol   = header.findIndex((h) => h.includes('description') || h.includes('name') || h.includes('memo'));
+    const amountCol = header.findIndex((h) => h.includes('amount') || h.includes('cad'));
+    mapping = {
+      dateCol:   dateCol   >= 0 ? dateCol   : 0,
+      descCol:   descCol   >= 0 ? descCol   : 1,
+      amountCol: amountCol >= 0 ? amountCol : 2,
+    };
   }
 
-  return { transactions, format };
+  return parseGeneric(csvText, account, mapping);
 }

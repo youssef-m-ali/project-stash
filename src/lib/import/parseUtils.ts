@@ -1,6 +1,5 @@
 import { v4 as uuid } from 'uuid';
 import type { Account, ParsedTransaction } from '@/lib/types';
-import { applyIgnoreRules } from './applyIgnoreRules';
 
 /** Strip BOM and split CSV text into rows, skipping blank lines. */
 export function splitRows(csv: string): string[] {
@@ -37,9 +36,11 @@ export function buildParsedTx(
   description: string,
   rawAmount: number,
   account: Account,
+  flipSign?: boolean,
 ): ParsedTransaction {
-  const { status } = applyIgnoreRules(description, rawAmount, account);
-  const amount = account.kind === 'credit-card' ? rawAmount : Math.abs(rawAmount);
+  const amount = flipSign !== undefined
+    ? (flipSign ? -rawAmount : rawAmount)
+    : (account.kind === 'credit-card' ? rawAmount : Math.abs(rawAmount));
 
   return {
     tempId: uuid(),
@@ -51,7 +52,7 @@ export function buildParsedTx(
     bucketId: null,
     periodId: null,
     suggestedBucketId: null,
-    status,
+    status: 'pending' as const,
     duplicate: false,
   };
 }
