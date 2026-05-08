@@ -1,4 +1,4 @@
-'use client';
+
 
 import type { ParsedTransaction } from '@/lib/types';
 import { Button } from '@/components/ui/Button';

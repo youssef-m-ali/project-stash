@@ -1,4 +1,4 @@
-'use client';
+
 
 import type { BucketFill } from '@/lib/types';
 
