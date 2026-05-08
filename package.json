@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "tauri": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri": "$HOME/.cargo/bin/cargo tauri dev",
+    "tauri:build": "$HOME/.cargo/bin/cargo tauri build",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"
