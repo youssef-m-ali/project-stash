@@ -1,6 +1,4 @@
-'use client';
-
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import type { PaycheckPeriod } from '@/lib/types';
 
@@ -78,7 +76,7 @@ export function PeriodHeader({
         <div className="flex flex-col sm:items-end gap-1 ml-auto">
           {pendingCount > 0 ? (
             <Link
-              href="/review"
+              to="/review"
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 text-sm font-medium hover:bg-amber-500/20 transition-colors"
             >
               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-black text-xs font-bold">

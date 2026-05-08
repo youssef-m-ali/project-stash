@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 
 interface Props {
@@ -24,7 +24,7 @@ export function ImportSummaryBanner({ inserted, skipped, months, onImportMore }:
         )}
       </div>
       <div className="flex gap-3">
-        <Link href="/review">
+        <Link to="/review">
           <Button>Review transactions</Button>
         </Link>
         <Button variant="secondary" onClick={onImportMore}>Import more</Button>

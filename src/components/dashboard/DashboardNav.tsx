@@ -1,7 +1,4 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 
 const NAV = [
   {
@@ -69,7 +66,7 @@ export function DashboardNav() {
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
 
   function isActive(item: typeof NAV[0]) {
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -83,7 +80,7 @@ export function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 active
                   ? 'bg-zinc-700 text-zinc-100 font-medium'

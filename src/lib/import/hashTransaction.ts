@@ -1,11 +1,13 @@
-import { createHash } from 'crypto';
-
-export function hashTransaction(
+export async function hashTransaction(
   date: string,
   description: string,
   rawAmount: number,
   accountId: string,
-): string {
+): Promise<string> {
   const canonical = `${date}|${description.trim().toLowerCase()}|${rawAmount}|${accountId}`;
-  return createHash('sha256').update(canonical).digest('hex').slice(0, 16);
+  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
+  const hex = Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  return hex.slice(0, 16);
 }

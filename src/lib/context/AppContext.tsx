@@ -1,7 +1,6 @@
-'use client';
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
+import { getConfig } from '@/lib/db/queries/config';
 import type { BudgetState } from '@/lib/types';
 
 interface AppContextValue {
@@ -16,13 +15,11 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<BudgetState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   async function loadConfig() {
     try {
-      const res = await fetch('/api/config');
-      if (!res.ok) { setConfig(null); return; }
-      const data = await res.json();
+      const data = await getConfig();
       setConfig(data);
     } catch {
       setConfig(null);
@@ -42,9 +39,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !isSetup) {
-      router.push('/setup');
+      navigate('/setup');
     }
-  }, [isLoading, isSetup, router]);
+  }, [isLoading, isSetup, navigate]);
 
   return (
     <AppContext.Provider value={{ config, isSetup, isLoading, reloadConfig }}>
