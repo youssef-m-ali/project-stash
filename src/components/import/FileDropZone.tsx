@@ -1,6 +1,6 @@
-'use client';
-
 import { useRef } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { invoke } from '@tauri-apps/api/core';
 import type { Account } from '@/lib/types';
 import { AccountSelector } from './AccountSelector';
 
@@ -18,13 +18,36 @@ interface Props {
 export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function dedup(incoming: FileEntry[]) {
+    const existing = new Set(entries.map(e => e.file.name));
+    return [...entries, ...incoming.filter(e => !existing.has(e.file.name))];
+  }
+
+  // Drag-and-drop path: browser gives us real File objects directly
   function addFiles(files: FileList | null) {
     if (!files) return;
-    const newEntries: FileEntry[] = Array.from(files)
-      .filter((f) => f.name.endsWith('.csv'))
-      .map((f) => ({ file: f, accountId: '' }));
-    const existing = new Set(entries.map((e) => e.file.name));
-    onEntriesChange([...entries, ...newEntries.filter((e) => !existing.has(e.file.name))]);
+    const newEntries = Array.from(files)
+      .filter(f => f.name.endsWith('.csv'))
+      .map(f => ({ file: f, accountId: '' }));
+    onEntriesChange(dedup(newEntries));
+  }
+
+  // Click path: native macOS file picker → Rust reads content → synthesise File objects
+  async function browseNative() {
+    const selected = await open({
+      multiple: true,
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+    });
+    if (!selected) return;
+    const paths = Array.isArray(selected) ? selected : [selected];
+    const newEntries = await Promise.all(
+      paths.map(async path => {
+        const content = await invoke<string>('read_text_file', { path });
+        const name = path.split('/').pop() ?? path;
+        return { file: new File([content], name, { type: 'text/csv' }), accountId: '' };
+      }),
+    );
+    onEntriesChange(dedup(newEntries));
   }
 
   function setAccount(index: number, accountId: string) {
@@ -40,21 +63,22 @@ export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
       {/* Drop zone */}
       <div
         className="flex-1 border-2 border-dashed border-zinc-600 rounded-xl p-8 text-center cursor-pointer hover:border-zinc-400 transition-colors flex flex-col items-center justify-center"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+        onClick={browseNative}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
       >
         <p className="text-zinc-400 text-sm">
           Drop CSV files here, or <span className="text-zinc-200 underline">click to browse</span>
         </p>
         <p className="text-zinc-600 text-xs mt-1">One file per account · .csv only</p>
+        {/* Hidden input kept as drag-and-drop fallback only */}
         <input
           ref={inputRef}
           type="file"
           accept=".csv"
           multiple
           className="hidden"
-          onChange={(e) => addFiles(e.target.files)}
+          onChange={e => addFiles(e.target.files)}
         />
       </div>
 
@@ -68,7 +92,7 @@ export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
                 <AccountSelector
                   accounts={accounts}
                   value={entry.accountId}
-                  onChange={(id) => setAccount(i, id)}
+                  onChange={id => setAccount(i, id)}
                 />
               </div>
               <button
@@ -83,7 +107,6 @@ export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
           ))}
         </div>
       )}
-
     </div>
   );
 }
