@@ -1,6 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
+import { getTransactions } from '@/lib/db/queries/transactions';
 import type { BucketFill, TransactionWithSubs } from '@/lib/types';
 
 interface Props {
@@ -16,10 +15,8 @@ export function BucketTransactionsPanel({ bucket, periodId, startDate, endDate, 
 
   useEffect(() => {
     setTxs('loading');
-    const params = new URLSearchParams({ bucketId: bucket.id, periodId, startDate, endDate, status: 'approved' });
-    fetch(`/api/transactions?${params}`)
-      .then(r => r.json())
-      .then(d => setTxs(d.transactions ?? []))
+    getTransactions({ bucketId: bucket.id, periodId, startDate, endDate, status: 'approved' })
+      .then(txs => setTxs(txs))
       .catch(() => setTxs([]));
   }, [bucket.id, periodId, startDate, endDate]);
 

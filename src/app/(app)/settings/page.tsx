@@ -1,7 +1,9 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
+import { getConfig, saveConfig, deleteAllData } from '@/lib/db/queries/config';
+import { getBuckets } from '@/lib/db/queries/buckets';
+import { getMerchantMemory, patchMerchantMemory, deleteMerchantMemory } from '@/lib/db/queries/merchantMemory';
+import { getMerchantExemptions, addMerchantExemption, deleteMerchantExemption } from '@/lib/db/queries/merchantExemptions';
 import { v4 as uuid } from 'uuid';
 import { useAppContext } from '@/lib/context/AppContext';
 import type { Account, Bucket, FixedExpense, MerchantMemory } from '@/lib/types';
@@ -35,14 +37,9 @@ function BucketsSection({ initialBuckets }: { initialBuckets: Bucket[] }) {
 
   async function save() {
     setSaving(true);
-    // Delete all + re-insert via config POST (simpler than diffing)
-    const configRes = await fetch('/api/config').then(r => r.json());
+    const configRes = await getConfig();
     if (!configRes) { setSaving(false); return; }
-    await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...configRes, buckets: buckets.map((b, i) => ({ ...b, sortOrder: i })) }),
-    });
+    await saveConfig({ ...configRes, buckets: buckets.map((b, i) => ({ ...b, sortOrder: i })) });
     setSaving(false);
   }
 
@@ -166,13 +163,9 @@ function FixedExpensesSection({ initialExpenses }: { initialExpenses: FixedExpen
 
   async function save() {
     setSaving(true);
-    const configRes = await fetch('/api/config').then(r => r.json());
+    const configRes = await getConfig();
     if (!configRes) { setSaving(false); return; }
-    await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...configRes, fixedExpenses: expenses.map((e, i) => ({ ...e, sortOrder: i })) }),
-    });
+    await saveConfig({ ...configRes, fixedExpenses: expenses.map((e, i) => ({ ...e, sortOrder: i })) });
     setSaving(false);
   }
 
@@ -253,18 +246,9 @@ function IncomeSection({ initialNet, initialDate }: { initialNet: number; initia
 
   async function save() {
     setSaving(true);
-    const configRes = await fetch('/api/config').then(r => r.json());
+    const configRes = await getConfig();
     if (!configRes) { setSaving(false); return; }
-    await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...configRes,
-        income: { netPerPaycheck: Number(netPerPaycheck), firstPaycheckDate, frequency: 'biweekly' },
-      }),
-    });
-    // Regenerate periods
-    await fetch('/api/periods/regenerate', { method: 'POST' });
+    await saveConfig({ ...configRes, income: { netPerPaycheck: Number(netPerPaycheck), firstPaycheckDate, frequency: 'biweekly' } });
     setSaving(false);
   }
 
@@ -324,13 +308,9 @@ function AccountsSection({ initialAccounts }: { initialAccounts: Account[] }) {
 
   async function save() {
     setSaving(true);
-    const configRes = await fetch('/api/config').then(r => r.json());
+    const configRes = await getConfig();
     if (!configRes) { setSaving(false); return; }
-    await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...configRes, accounts }),
-    });
+    await saveConfig({ ...configRes, accounts });
     setSaving(false);
   }
 
@@ -394,13 +374,13 @@ function MerchantMemorySection() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/merchant-memory').then(r => r.json()),
-      fetch('/api/merchant-exemptions').then(r => r.json()),
-      fetch('/api/buckets').then(r => r.json()),
-    ]).then(([memData, exemptData, bucketData]) => {
-      setEntries(memData.entries ?? []);
-      setExemptions(exemptData.exemptions ?? []);
-      setBuckets(bucketData.buckets ?? []);
+      getMerchantMemory(),
+      getMerchantExemptions(),
+      getBuckets(),
+    ]).then(([entries, exemptions, buckets]) => {
+      setEntries(entries);
+      setExemptions(exemptions);
+      setBuckets(buckets);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -408,32 +388,24 @@ function MerchantMemorySection() {
   const activeEntries = entries.filter(e => !exemptKeys.has(e.merchantKey));
 
   async function forget(key: string) {
-    await fetch(`/api/merchant-memory/${encodeURIComponent(key)}`, { method: 'DELETE' });
+    await deleteMerchantMemory(key);
     setEntries(prev => prev.filter(e => e.merchantKey !== key));
   }
 
   async function exempt(key: string) {
-    await fetch('/api/merchant-exemptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ merchantKey: key }),
-    });
+    await addMerchantExemption(key);
     setExemptions(prev => [...prev, { merchantKey: key }]);
   }
 
   async function removeExemption(key: string) {
-    await fetch(`/api/merchant-exemptions/${encodeURIComponent(key)}`, { method: 'DELETE' });
+    await deleteMerchantExemption(key);
     setExemptions(prev => prev.filter(e => e.merchantKey !== key));
   }
 
   async function applyRemap(updateHistorical: boolean) {
     if (!remapModal) return;
     setRemapping(true);
-    await fetch(`/api/merchant-memory/${encodeURIComponent(remapModal.merchantKey)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucketId: remapModal.newBucketId, updateHistorical }),
-    });
+    await patchMerchantMemory(remapModal.merchantKey, remapModal.newBucketId, updateHistorical);
     setEntries(prev => prev.map(e =>
       e.merchantKey === remapModal.merchantKey ? { ...e, bucketId: remapModal.newBucketId } : e,
     ));
@@ -552,12 +524,12 @@ function MerchantMemorySection() {
 // ── Danger zone ────────────────────────────────────────────────────────────────
 
 function DangerZone() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
 
   async function handleReset() {
-    await fetch('/api/config', { method: 'DELETE' });
-    router.push('/setup');
+    await deleteAllData();
+    navigate('/setup');
   }
 
   return (

@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useAppContext } from '@/lib/context/AppContext';
 import { FileDropZone, type FileEntry } from '@/components/import/FileDropZone';
@@ -7,11 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { ColumnMappingStep, type MappingEntry } from '@/components/import/ColumnMappingStep';
 import { PreviewTable } from '@/components/import/PreviewTable';
 import { ImportSummaryBanner } from '@/components/import/ImportSummaryBanner';
+import { getLastImportDates, getCsvMapping, saveCsvMapping } from '@/lib/db/queries/accounts';
+import { previewTransactions, importTransactions, type PreviewTx } from '@/lib/db/queries/transactions';
 import { splitRows, splitCols } from '@/lib/import/parseUtils';
 import type { ParsedTransaction, CsvMapping } from '@/lib/types';
 
 type Stage = 'upload' | 'mapping' | 'preview' | 'done';
-interface PreviewTx extends ParsedTransaction { id: string }
 interface ImportResult { inserted: number; skipped: number }
 
 export default function ImportPage() {
@@ -27,9 +26,7 @@ export default function ImportPage() {
 
 
   useEffect(() => {
-    fetch('/api/accounts/last-import')
-      .then(r => r.json())
-      .then(d => setLastTxDate(d.lastTxDate ?? {}));
+    getLastImportDates().then(setLastTxDate);
   }, []);
 
   if (!config) return null;
@@ -45,12 +42,11 @@ export default function ImportPage() {
           const csvText = await entry.file.text();
           const headers = splitCols(splitRows(csvText)[0] ?? '');
 
-          const res  = await fetch(`/api/accounts/${entry.accountId}/csv-mapping`);
-          const data = await res.json() as { mapping: CsvMapping | null };
+          const savedMapping = await getCsvMapping(entry.accountId);
 
           let mapping: CsvMapping;
-          if (data.mapping) {
-            mapping = data.mapping;
+          if (savedMapping) {
+            mapping = savedMapping;
           } else {
             // Auto-detect from headers as a best-guess starting point
             const lower = headers.map(h => h.toLowerCase().trim());
@@ -89,35 +85,14 @@ export default function ImportPage() {
     setLoading(true);
     setError(null);
     try {
-      // Persist mappings per account
-      await Promise.all(
-        confirmed.map(e =>
-          fetch(`/api/accounts/${e.accountId}/csv-mapping`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mapping: e.mapping }),
-          }),
-        ),
-      );
+      await Promise.all(confirmed.map(e => saveCsvMapping(e.accountId, e.mapping)));
 
-      // Build preview payload with confirmed mappings
       const files = await Promise.all(
-        confirmed.map(async e => ({
-          accountId: e.accountId,
-          csvText:   await e.file.text(),
-          mapping:   e.mapping,
-        })),
+        confirmed.map(async e => ({ accountId: e.accountId, csvText: await e.file.text(), mapping: e.mapping })),
       );
 
-      const res  = await fetch('/api/transactions/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files }),
-      });
-      const data = await res.json() as { transactions: PreviewTx[]; error?: string };
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Preview failed');
-
-      setPreview(data.transactions);
+      const { transactions } = await previewTransactions(files);
+      setPreview(transactions);
       setStage('preview');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -130,14 +105,8 @@ export default function ImportPage() {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch('/api/transactions/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions: txs }),
-      });
-      const data = await res.json() as ImportResult & { error?: string };
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Import failed');
-      setResult({ inserted: data.inserted, skipped: data.skipped });
+      const result = await importTransactions(txs);
+      setResult(result);
       setStage('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');

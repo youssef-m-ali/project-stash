@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import { getDb } from '../client';
 import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
 import type { ReviewTransaction } from '@/lib/types';
 
@@ -9,50 +8,50 @@ type TxRow = {
   period_id: string | null; status: string; imported_at: string;
 };
 
-export function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const periodId = searchParams.get('periodId');
-  const all = searchParams.get('all') === 'true';
+interface ReviewParams {
+  periodId?: string | null;
+  all?: boolean;
+}
+
+export async function getReviewTransactions(params: ReviewParams = {}): Promise<ReviewTransaction[]> {
+  const db = await getDb();
+  const { periodId, all } = params;
 
   let sql: string;
-  const params: (string | null)[] = [];
+  const sqlParams: unknown[] = [];
 
   if (all) {
     sql = `SELECT * FROM transactions WHERE status = 'pending' ORDER BY date DESC, imported_at DESC`;
   } else if (periodId) {
     sql = `SELECT * FROM transactions WHERE status = 'pending' AND period_id = ? ORDER BY date DESC, imported_at DESC`;
-    params.push(periodId);
+    sqlParams.push(periodId);
   } else {
-    // Default: current period + unassigned
     const today = new Date().toISOString().slice(0, 10);
-    const period = db.prepare(
-      `SELECT id FROM paycheck_periods WHERE start_date <= ? AND ? <= end_date LIMIT 1`
-    ).get(today, today) as { id: string } | undefined;
-
-    if (period) {
+    const periodRows = await db.select<{ id: string }[]>(
+      `SELECT id FROM paycheck_periods WHERE start_date <= ? AND ? <= end_date LIMIT 1`,
+      [today, today],
+    );
+    if (periodRows.length > 0) {
       sql = `SELECT * FROM transactions WHERE status = 'pending' AND (period_id = ? OR period_id IS NULL) ORDER BY date DESC, imported_at DESC`;
-      params.push(period.id);
+      sqlParams.push(periodRows[0].id);
     } else {
       sql = `SELECT * FROM transactions WHERE status = 'pending' ORDER BY date DESC, imported_at DESC`;
     }
   }
 
-  const rows = db.prepare(sql).all(...params) as TxRow[];
+  const rows = await db.select<TxRow[]>(sql, sqlParams);
 
-  // Build merchant memory map for suggestions
-  const memoryMap = new Map<string, string>(
-    (db.prepare('SELECT merchant_key, bucket_id FROM merchant_memory').all() as { merchant_key: string; bucket_id: string }[]).map(
-      r => [r.merchant_key, r.bucket_id],
-    ),
+  const memoryRows = await db.select<{ merchant_key: string; bucket_id: string }[]>(
+    'SELECT merchant_key, bucket_id FROM merchant_memory', [],
   );
+  const memoryMap = new Map(memoryRows.map(r => [r.merchant_key, r.bucket_id]));
 
-  const exemptKeys = new Set<string>(
-    (db.prepare('SELECT merchant_key FROM merchant_exemptions').all() as { merchant_key: string }[]).map(
-      r => r.merchant_key,
-    ),
+  const exemptRows = await db.select<{ merchant_key: string }[]>(
+    'SELECT merchant_key FROM merchant_exemptions', [],
   );
+  const exemptKeys = new Set(exemptRows.map(r => r.merchant_key));
 
-  const transactions: ReviewTransaction[] = rows.map(r => {
+  return rows.map(r => {
     const key = normalizeMerchant(r.description);
     return {
       id: r.id,
@@ -68,6 +67,4 @@ export function GET(req: Request) {
       suggestedBucketId: exemptKeys.has(key) ? null : (memoryMap.get(key) ?? null),
     };
   });
-
-  return NextResponse.json({ transactions });
 }

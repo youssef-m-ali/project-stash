@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
@@ -10,6 +8,10 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
+import { getReviewTransactions } from '@/lib/db/queries/review';
+import { getBuckets } from '@/lib/db/queries/buckets';
+import { patchTransaction } from '@/lib/db/queries/transactions';
+import { addMerchantExemption } from '@/lib/db/queries/merchantExemptions';
 import type { ReviewTransaction, Bucket } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
@@ -59,11 +61,7 @@ function DraggableCard({
     const parsed = parseFloat(amount);
     if (isNaN(parsed)) return;
     setSaving(true);
-    await fetch(`/api/transactions/${tx.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: desc, amount: parsed }),
-    });
+    await patchTransaction(tx.id, { description: desc, amount: parsed });
     onEdit(desc, parsed);
     setEditing(false);
     setSaving(false);
@@ -294,12 +292,9 @@ export default function ReviewPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [txRes, bucketRes] = await Promise.all([
-      fetch('/api/review').then(r => r.json()),
-      fetch('/api/buckets').then(r => r.json()),
-    ]);
-    setTransactions(txRes.transactions ?? []);
-    setBuckets(bucketRes.buckets ?? []);
+    const [txs, buckets] = await Promise.all([getReviewTransactions(), getBuckets()]);
+    setTransactions(txs);
+    setBuckets(buckets);
   }, []);
 
   useEffect(() => {
@@ -307,11 +302,7 @@ export default function ReviewPage() {
   }, [load]);
 
   async function handleApprove(id: string, bucketId: string) {
-    await fetch(`/api/transactions/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'approved', bucketId }),
-    });
+    await patchTransaction(id, { status: 'approved', bucketId });
     setTransactions(prev => {
       const approvedTx = prev.find(t => t.id === id);
       const key = approvedTx ? normalizeMerchant(approvedTx.description) : null;
@@ -327,24 +318,14 @@ export default function ReviewPage() {
   }
 
   async function handleIgnore(id: string) {
-    await fetch(`/api/transactions/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'ignored' }),
-    });
+    await patchTransaction(id, { status: 'ignored' });
     setTransactions(prev => prev.filter(t => t.id !== id));
   }
 
   async function handleConfirmAllSuggested() {
     const suggested = transactions.filter(t => t.suggestedBucketId);
     await Promise.all(
-      suggested.map(t =>
-        fetch(`/api/transactions/${t.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'approved', bucketId: t.suggestedBucketId }),
-        }),
-      ),
+      suggested.map(t => patchTransaction(t.id, { status: 'approved', bucketId: t.suggestedBucketId })),
     );
     const approvedIds = new Set(suggested.map(t => t.id));
     const merchantMap = new Map<string, string>();
@@ -374,11 +355,7 @@ export default function ReviewPage() {
     const tx = transactions.find(t => t.id === id);
     const key = tx ? normalizeMerchant(tx.description) : '';
     if (key) {
-      await fetch('/api/merchant-exemptions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantKey: key }),
-      });
+      await addMerchantExemption(key);
       setTransactions(prev => prev.map(t =>
         normalizeMerchant(t.description) === key ? { ...t, suggestedBucketId: null } : t,
       ));

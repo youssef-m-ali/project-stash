@@ -1,10 +1,9 @@
-'use client';
-
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { PeriodHeader } from '@/components/dashboard/PeriodHeader';
 import { BucketFillRow } from '@/components/dashboard/BucketFillRow';
 import { BucketTransactionsPanel } from '@/components/dashboard/BucketTransactionsPanel';
+import { getDashboard } from '@/lib/db/queries/dashboard';
 import type { BucketFill, DashboardData } from '@/lib/types';
 
 export default function DashboardPage() {
@@ -14,9 +13,7 @@ export default function DashboardPage() {
 
   const fetchDashboard = useCallback((periodId: string | null) => {
     setData('loading');
-    const url = periodId ? `/api/dashboard?periodId=${periodId}` : '/api/dashboard';
-    fetch(url)
-      .then(r => r.json())
+    getDashboard(periodId ?? undefined)
       .then(setData)
       .catch(() => setData(null));
   }, []);
@@ -36,7 +33,7 @@ export default function DashboardPage() {
         <p className="text-zinc-400">No paycheck period found.</p>
         <p className="text-sm text-zinc-500">
           Make sure your income is set up correctly in{' '}
-          <Link href="/settings" className="text-zinc-300 underline underline-offset-2">Settings</Link>.
+          <Link to="/settings" className="text-zinc-300 underline underline-offset-2">Settings</Link>.
         </p>
       </div>
     );
@@ -48,10 +45,7 @@ export default function DashboardPage() {
   return (
     <div
       className="flex flex-col gap-6 mx-auto"
-      style={{
-        maxWidth: isOpen ? '64rem' : '42rem',
-        transition: 'max-width 300ms ease-in-out',
-      }}
+      style={{ maxWidth: isOpen ? '64rem' : '42rem', transition: 'max-width 300ms ease-in-out' }}
     >
       <PeriodHeader
         period={period}
@@ -64,16 +58,12 @@ export default function DashboardPage() {
         onBackToCurrent={() => setSelectedPeriodId(null)}
       />
 
-      <div
-        className="flex gap-4 items-stretch"
-        style={{ maxHeight: isOpen ? 'calc(100vh - 200px)' : undefined }}
-      >
-        {/* Bucket list */}
+      <div className="flex gap-4 items-stretch" style={{ maxHeight: isOpen ? 'calc(100vh - 200px)' : undefined }}>
         <div className="flex-1 min-w-0 rounded-xl border border-zinc-700 bg-zinc-800/40 px-4 overflow-y-auto">
           {buckets.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-zinc-500 text-sm">No buckets configured.</p>
-              <Link href="/settings" className="text-sm text-zinc-300 underline underline-offset-2 mt-1 inline-block">
+              <Link to="/settings" className="text-sm text-zinc-300 underline underline-offset-2 mt-1 inline-block">
                 Add buckets in Settings
               </Link>
             </div>
@@ -89,15 +79,9 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Transactions panel — slides in from the right */}
         <div
           className="shrink-0 rounded-xl border border-zinc-700 bg-zinc-800/40 overflow-hidden flex flex-col"
-          style={{
-            width: isOpen ? '28rem' : '0px',
-            opacity: isOpen ? 1 : 0,
-            transition: 'width 300ms ease-in-out, opacity 200ms ease-in-out',
-            borderColor: isOpen ? undefined : 'transparent',
-          }}
+          style={{ width: isOpen ? '28rem' : '0px', opacity: isOpen ? 1 : 0, transition: 'width 300ms ease-in-out, opacity 200ms ease-in-out', borderColor: isOpen ? undefined : 'transparent' }}
         >
           {activeBucket && (
             <BucketTransactionsPanel

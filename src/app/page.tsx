@@ -1,23 +1,17 @@
-'use client';
-
 import { useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link, useNavigate } from 'react-router-dom';
+import { getConfig } from '@/lib/db/queries/config';
 
 export default function RootPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('/api/config')
-      .then(r => r.json())
+    getConfig()
       .then(data => {
-        if (data !== null) {
-          router.replace('/dashboard');
-        }
-        // else: stay on page (show welcome)
+        if (data !== null) navigate('/dashboard', { replace: true });
       })
       .catch(() => { /* stay on page */ });
-  }, [router]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">
@@ -32,7 +26,7 @@ export default function RootPage() {
 
         <div className="flex flex-col gap-3">
           <Link
-            href="/setup"
+            to="/setup"
             className="flex h-12 items-center justify-center rounded-lg bg-zinc-100 px-6 text-base font-medium text-zinc-900 transition-colors hover:bg-white"
           >
             Get started

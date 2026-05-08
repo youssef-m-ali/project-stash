@@ -1,7 +1,8 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
+import { getTransactions, patchTransaction, deleteTransaction } from '@/lib/db/queries/transactions';
+import { getBuckets } from '@/lib/db/queries/buckets';
+import { getConfig } from '@/lib/db/queries/config';
 import type { TransactionWithSubs, Bucket } from '@/lib/types';
 
 function monthLabel(ym: string) {
@@ -173,33 +174,25 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/transactions').then(r => r.json()),
-      fetch('/api/buckets').then(r => r.json()),
-      fetch('/api/config').then(r => r.json()),
-    ]).then(([txData, bucketData, configData]) => {
-      setTransactions(txData.transactions ?? []);
-      setBuckets(bucketData.buckets ?? []);
-      const map = new Map<string, string>();
-      for (const a of (configData?.accounts ?? [])) {
-        map.set(a.id, a.label);
-      }
-      setAccountMap(map);
-    }).finally(() => setLoading(false));
+    Promise.all([getTransactions(), getBuckets(), getConfig()])
+      .then(([txs, buckets, config]) => {
+        setTransactions(txs);
+        setBuckets(buckets);
+        const map = new Map<string, string>();
+        for (const a of (config?.accounts ?? [])) map.set(a.id, a.label);
+        setAccountMap(map);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   async function deleteTx(txId: string) {
-    await fetch(`/api/transactions/${txId}`, { method: 'DELETE' });
+    await deleteTransaction(txId);
     setTransactions(prev => prev.filter(tx => tx.id !== txId));
   }
 
   async function reclassify(txId: string, bucketId: string | null) {
     const status = bucketId ? 'approved' : 'pending';
-    await fetch(`/api/transactions/${txId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, bucketId }),
-    });
+    await patchTransaction(txId, { status, bucketId });
     setTransactions(prev => prev.map(tx =>
       tx.id === txId ? { ...tx, bucketId, status } : tx,
     ));

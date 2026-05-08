@@ -1,7 +1,6 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
+import { saveConfig } from '@/lib/db/queries/config';
 import type { BudgetState } from '@/lib/types';
 import { StepIncome } from '@/components/questionnaire/StepIncome';
 import { StepFixedExpenses } from '@/components/questionnaire/StepFixedExpenses';
@@ -16,7 +15,7 @@ function buildInitialDraft(): Partial<BudgetState> {
 }
 
 export default function SetupPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Partial<BudgetState>>(buildInitialDraft);
 
@@ -35,16 +34,8 @@ export default function SetupPage() {
 
   async function handleFinish(slice: Partial<BudgetState>) {
     const final = { ...draft, ...slice } as BudgetState;
-
-    await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(final),
-    });
-
-    await fetch('/api/periods/regenerate', { method: 'POST' });
-
-    router.push('/dashboard');
+    await saveConfig(final);
+    navigate('/dashboard');
   }
 
   const stepProps = { draft, onBack: handleBack };
