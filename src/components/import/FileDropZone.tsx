@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import type { Account } from '@/lib/types';
@@ -16,8 +15,6 @@ interface Props {
 }
 
 export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   function dedup(incoming: FileEntry[]) {
     const existing = new Set(entries.map(e => e.file.name));
     return [...entries, ...incoming.filter(e => !existing.has(e.file.name))];
@@ -71,15 +68,6 @@ export function FileDropZone({ accounts, entries, onEntriesChange }: Props) {
           Drop CSV files here, or <span className="text-zinc-200 underline">click to browse</span>
         </p>
         <p className="text-zinc-600 text-xs mt-1">One file per account · .csv only</p>
-        {/* Hidden input kept as drag-and-drop fallback only */}
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv"
-          multiple
-          className="hidden"
-          onChange={e => addFiles(e.target.files)}
-        />
       </div>
 
       {/* File list */}
