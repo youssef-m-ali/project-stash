@@ -16,7 +16,7 @@ export function BucketTransactionsPanel({ bucket, periodId, startDate, endDate, 
   useEffect(() => {
     setTxs('loading');
     getTransactions({ bucketId: bucket.id, periodId, startDate, endDate, status: 'approved' })
-      .then(txs => setTxs(txs))
+      .then(setTxs)
       .catch(() => setTxs([]));
   }, [bucket.id, periodId, startDate, endDate]);
 
@@ -24,7 +24,6 @@ export function BucketTransactionsPanel({ bucket, periodId, startDate, endDate, 
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sticky header */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-700/60 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           {bucket.emoji ? (
@@ -50,7 +49,6 @@ export function BucketTransactionsPanel({ bucket, periodId, startDate, endDate, 
         </div>
       </div>
 
-      {/* Scrollable transaction list */}
       <div className="flex-1 overflow-y-auto">
         {txs === 'loading' ? (
           <p className="text-sm text-zinc-500 py-8 text-center">Loading…</p>
