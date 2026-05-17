@@ -194,7 +194,6 @@ function FileMappingCard({
 
   return (
     <div className="rounded-xl border border-zinc-700 bg-zinc-800/40 p-5 flex flex-col gap-5">
-      {/* File / account header */}
       <div>
         <p className="text-sm font-semibold text-zinc-100">{entry.accountLabel}</p>
         <p className="text-xs text-zinc-500 mt-0.5">{entry.file.name}</p>
@@ -202,7 +201,6 @@ function FileMappingCard({
 
       <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-2 gap-32 w-4/5 mx-auto mt-4">
-          {/* Left: pool of unassigned columns */}
           <div>
             <p className="text-xs text-zinc-500 mb-2">Drag a column to a field:</p>
             <DropPool>
@@ -216,7 +214,6 @@ function FileMappingCard({
             </DropPool>
           </div>
 
-          {/* Right: three named slots */}
           <div className="flex flex-col gap-2">
             <DropSlot label="Date"        slotId="date"   assignedLabel={headerOf(mapping.dateCol)}   onClear={() => clearSlot('date')}   />
             <DropSlot label="Description" slotId="desc"   assignedLabel={headerOf(mapping.descCol)}   onClear={() => clearSlot('desc')}   />
@@ -231,7 +228,6 @@ function FileMappingCard({
         </DragOverlay>
       </DndContext>
 
-      {/* Flip sign toggle */}
       <label className="flex items-center gap-3 cursor-pointer mt-4">
         <button
           type="button"
@@ -248,7 +244,6 @@ function FileMappingCard({
         </div>
       </label>
 
-      {/* Live preview table */}
       {allMapped && dataRows.length > 0 && (
         <div>
           <p className="text-xs text-zinc-500 mb-2">Preview ({dataRows.length} rows):</p>

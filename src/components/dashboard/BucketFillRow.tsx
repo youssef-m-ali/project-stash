@@ -50,7 +50,6 @@ export function BucketFillRow({ bucket, onClick, selected }: Props) {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="h-2 w-full rounded-full bg-zinc-700 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-300 ${isOver ? 'bg-red-500' : ''}`}
