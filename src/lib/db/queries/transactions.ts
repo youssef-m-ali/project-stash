@@ -124,8 +124,6 @@ export async function deleteTransaction(id: string): Promise<void> {
   await db.execute('DELETE FROM transactions WHERE id = ?', [id]);
 }
 
-// ── Preview ───────────────────────────────────────────────────────────────────
-
 interface FileInput { accountId: string; csvText: string; mapping?: CsvMapping | null }
 export interface PreviewTx extends ParsedTransaction { id: string }
 
@@ -169,8 +167,6 @@ export async function previewTransactions(
 
   return { transactions: allTransactions, buckets };
 }
-
-// ── Import ────────────────────────────────────────────────────────────────────
 
 export async function importTransactions(
   transactions: (ParsedTransaction & { id?: string })[],

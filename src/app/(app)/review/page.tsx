@@ -16,8 +16,6 @@ import type { ReviewTransaction, Bucket } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { normalizeMerchant } from '@/lib/import/normalizeMerchant';
 
-// ─── Card content (shared between inline + drag overlay) ──────────────────────
-
 function TxCardContent({ tx }: { tx: ReviewTransaction }) {
   return (
     <div className="flex flex-col gap-1">
@@ -33,8 +31,6 @@ function TxCardContent({ tx }: { tx: ReviewTransaction }) {
     </div>
   );
 }
-
-// ─── Draggable card (backlog only) ────────────────────────────────────────────
 
 function DraggableCard({
   tx,
@@ -108,8 +104,6 @@ function DraggableCard({
   );
 }
 
-// ─── Suggested card (sits in a bucket column, awaits confirmation) ─────────────
-
 function SuggestedCard({
   tx,
   onConfirm,
@@ -174,8 +168,6 @@ function SuggestedCard({
   );
 }
 
-// ─── Backlog column ───────────────────────────────────────────────────────────
-
 function BacklogColumn({
   transactions,
   onIgnore,
@@ -219,8 +211,6 @@ function BacklogColumn({
     </div>
   );
 }
-
-// ─── Droppable bucket column ──────────────────────────────────────────────────
 
 function BucketColumn({
   bucket,
@@ -282,8 +272,6 @@ function BucketColumn({
     </div>
   );
 }
-
-// ─── Main board ───────────────────────────────────────────────────────────────
 
 export default function ReviewPage() {
   const [transactions, setTransactions] = useState<ReviewTransaction[]>([]);
