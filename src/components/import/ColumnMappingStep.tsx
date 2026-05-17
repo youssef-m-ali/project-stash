@@ -21,8 +21,6 @@ export interface MappingEntry {
   mapping: CsvMapping;
 }
 
-// ─── Shared chip appearance ───────────────────────────────────────────────────
-
 function ColChip({ label, faded = false, fullWidth = false }: { label: string; faded?: boolean; fullWidth?: boolean }) {
   return (
     <span
@@ -33,8 +31,6 @@ function ColChip({ label, faded = false, fullWidth = false }: { label: string; f
   );
 }
 
-// ─── Draggable chip ───────────────────────────────────────────────────────────
-
 function DraggableChip({ colIdx, label }: { colIdx: number; label: string }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: String(colIdx) });
   return (
@@ -43,8 +39,6 @@ function DraggableChip({ colIdx, label }: { colIdx: number; label: string }) {
     </div>
   );
 }
-
-// ─── Drop slot (Date / Description / Amount) ──────────────────────────────────
 
 function DropSlot({
   label,
@@ -91,8 +85,6 @@ function DropSlot({
   );
 }
 
-// ─── Droppable pool ───────────────────────────────────────────────────────────
-
 function DropPool({ children }: { children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'pool' });
   return (
@@ -104,8 +96,6 @@ function DropPool({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-// ─── Per-file mapping card ────────────────────────────────────────────────────
 
 function FileMappingCard({
   entry,
@@ -282,8 +272,6 @@ function FileMappingCard({
     </div>
   );
 }
-
-// ─── Main step component ──────────────────────────────────────────────────────
 
 interface Props {
   entries: MappingEntry[];

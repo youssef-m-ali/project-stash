@@ -53,8 +53,6 @@ const NAV = [
   },
 ];
 
-// ── Top bar (branding only) ───────────────────────────────────────────────────
-
 export function DashboardNav() {
   return (
     <header className="border-b border-zinc-700 bg-zinc-800/80 backdrop-blur sticky top-0 z-10 h-12 flex items-center px-4">
@@ -62,8 +60,6 @@ export function DashboardNav() {
     </header>
   );
 }
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
   const { pathname } = useLocation();
