@@ -17,8 +17,6 @@ function StatusBadge({ status }: { status: string }) {
   return <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-500 whitespace-nowrap">Ignored</span>;
 }
 
-// ── Transaction row ───────────────────────────────────────────────────────────
-
 function TxRow({
   tx,
   buckets,
@@ -95,8 +93,6 @@ function TxRow({
   );
 }
 
-// ── Month section ─────────────────────────────────────────────────────────────
-
 function MonthSection({
   monthKey,
   transactions,
@@ -164,8 +160,6 @@ function MonthSection({
     </div>
   );
 }
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
   const [transactions, setTransactions] = useState<TransactionWithSubs[]>([]);
