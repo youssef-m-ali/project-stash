@@ -14,8 +14,6 @@ import { Label } from '@/components/ui/Label';
 
 const PRESET_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#6b7280', '#22c55e'];
 
-// ── Buckets section ────────────────────────────────────────────────────────────
-
 function BucketsSection({ initialBuckets }: { initialBuckets: Bucket[] }) {
   const [buckets, setBuckets] = useState<Bucket[]>(initialBuckets);
   const [saving, setSaving] = useState(false);
@@ -143,8 +141,6 @@ function BucketsSection({ initialBuckets }: { initialBuckets: Bucket[] }) {
   );
 }
 
-// ── Fixed expenses section ────────────────────────────────────────────────────
-
 function FixedExpensesSection({ initialExpenses }: { initialExpenses: FixedExpense[] }) {
   const [expenses, setExpenses] = useState<FixedExpense[]>(initialExpenses);
   const [saving, setSaving] = useState(false);
@@ -237,8 +233,6 @@ function FixedExpensesSection({ initialExpenses }: { initialExpenses: FixedExpen
   );
 }
 
-// ── Income section ─────────────────────────────────────────────────────────────
-
 function IncomeSection({ initialNet, initialDate }: { initialNet: number; initialDate: string }) {
   const [netPerPaycheck, setNetPerPaycheck] = useState(String(initialNet));
   const [firstPaycheckDate, setFirstPaycheckDate] = useState(initialDate);
@@ -284,8 +278,6 @@ function IncomeSection({ initialNet, initialDate }: { initialNet: number; initia
     </section>
   );
 }
-
-// ── Accounts section ───────────────────────────────────────────────────────────
 
 function AccountsSection({ initialAccounts }: { initialAccounts: Account[] }) {
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
@@ -361,8 +353,6 @@ function AccountsSection({ initialAccounts }: { initialAccounts: Account[] }) {
     </section>
   );
 }
-
-// ── Merchant memory section ────────────────────────────────────────────────────
 
 function MerchantMemorySection() {
   const [entries, setEntries] = useState<MerchantMemory[]>([]);
@@ -521,8 +511,6 @@ function MerchantMemorySection() {
   );
 }
 
-// ── Danger zone ────────────────────────────────────────────────────────────────
-
 function DangerZone() {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
@@ -556,8 +544,6 @@ function DangerZone() {
     </section>
   );
 }
-
-// ── Page ───────────────────────────────────────────────────────────────────────
 
 const TABS = ['Income', 'Fixed Expenses', 'Buckets', 'Accounts', 'Merchant Memory', 'Danger Zone'] as const;
 type Tab = typeof TABS[number];
