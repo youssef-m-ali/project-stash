@@ -24,14 +24,12 @@ export default function ImportPage() {
   const [lastTxDate, setLastTxDate] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     getLastImportDates().then(setLastTxDate);
   }, []);
 
   if (!config) return null;
 
-  // Upload → Mapping: read headers from each file and pre-populate from saved mappings
   async function handleProceedToMapping(entries: FileEntry[]) {
     setLoading(true);
     setError(null);
@@ -48,7 +46,6 @@ export default function ImportPage() {
           if (savedMapping) {
             mapping = savedMapping;
           } else {
-            // Auto-detect from headers as a best-guess starting point
             const lower = headers.map(h => h.toLowerCase().trim());
             const dateCol   = lower.findIndex(h => h.includes('date'));
             const descCol   = lower.findIndex(h => h.includes('description') || h.includes('name') || h.includes('memo'));
@@ -80,7 +77,6 @@ export default function ImportPage() {
     }
   }
 
-  // Mapping → Preview: save mappings then run preview API
   async function handleConfirmMappings(confirmed: MappingEntry[]) {
     setLoading(true);
     setError(null);
